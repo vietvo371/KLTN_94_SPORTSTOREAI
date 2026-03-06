@@ -1,43 +1,20 @@
-import { create } from 'zustand'
-import type { CartItem } from '@/types'
+import { create } from 'zustand';
 
 interface CartState {
-    items: CartItem[]
-    isOpen: boolean
-    // Computed
-    totalItems: () => number
-    totalPrice: () => number
-    // Actions
-    setItems: (items: CartItem[]) => void
-    openCart: () => void
-    closeCart: () => void
-    toggleCart: () => void
-    clear: () => void
+    isOpen: boolean;
+    itemCount: number;
+    openCart: () => void;
+    closeCart: () => void;
+    toggleCart: () => void;
+    setItemCount: (count: number) => void;
 }
 
-/**
- * Zustand store cho Cart UI state.
- * Dữ liệu thật fetch từ BE qua React Query.
- * Store này chỉ giữ: danh sách items đã fetch + trạng thái drawer.
- *
- * Dùng: const { items, isOpen, totalItems, openCart } = useCartStore()
- */
-export const useCartStore = create<CartState>()((set, get) => ({
-    items: [],
+// Client-side UI state for Cart Drawer
+export const useCartStore = create<CartState>((set) => ({
     isOpen: false,
-
-    totalItems: () => get().items.reduce((sum, item) => sum + item.so_luong, 0),
-
-    totalPrice: () =>
-        get().items.reduce((sum, item) => sum + item.don_gia * item.so_luong, 0),
-
-    setItems: (items) => set({ items }),
-
+    itemCount: 0,
     openCart: () => set({ isOpen: true }),
-
     closeCart: () => set({ isOpen: false }),
-
     toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
-
-    clear: () => set({ items: [] }),
-}))
+    setItemCount: (count) => set({ itemCount: count }),
+}));

@@ -1,47 +1,47 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import type { User } from '@/types'
-import { removeToken, setToken } from '@/lib/api'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import Cookies from 'js-cookie';
+import { User } from '@/types/auth.types';
 
 interface AuthState {
-    user: User | null
-    isAuthenticated: boolean
-    // Actions
-    login: (user: User, token: string) => void
-    logout: () => void
-    updateUser: (user: Partial<User>) => void
+    user: User | null;
+    token: string | null;
+    isAuthenticated: boolean;
+    setAuth: (user: User, token: string) => void;
+    updateUser: (user: Partial<User>) => void;
+    logout: () => void;
 }
 
-/**
- * Zustand store cho Auth state.
- * Tự động lưu vào localStorage qua persist middleware.
- *
- * Dùng: const { user, isAuthenticated, login, logout } = useAuthStore()
- */
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
             user: null,
+            token: null,
             isAuthenticated: false,
 
-            login: (user, token) => {
-                setToken(token)
-                set({ user, isAuthenticated: true })
+            setAuth: (user, token) => {
+                // Also set in Cookies for middleware / SSR usage later if needed
+                Cookies.set('token', token, { expires: 30 });
+                Cookies.set('user', JSON.stringify(user), { expires: 30 });
+
+                set({ user, token, isAuthenticated: true });
             },
+
+            updateUser: (updatedData) => set((state) => {
+                if (!state.user) return state;
+                const newUser = { ...state.user, ...updatedData };
+                Cookies.set('user', JSON.stringify(newUser), { expires: 30 });
+                return { user: newUser };
+            }),
 
             logout: () => {
-                removeToken()
-                set({ user: null, isAuthenticated: false })
+                Cookies.remove('token');
+                Cookies.remove('user');
+                set({ user: null, token: null, isAuthenticated: false });
             },
-
-            updateUser: (updates) =>
-                set((state) => ({
-                    user: state.user ? { ...state.user, ...updates } : null,
-                })),
         }),
         {
-            name: 'sportstore-auth',
-            partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+            name: 'auth-storage', // saves to localStorage so state persists across reloads
         }
     )
-)
+);

@@ -1,66 +1,53 @@
-import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import Cookies from 'js-cookie'
+import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import Cookies from 'js-cookie';
 
-const TOKEN_KEY = 'sportstore_token'
-
-/**
- * Axios instance — BẮT BUỘC dùng cho mọi API call trong sportstore-client.
- * Tự động đính kèm Bearer token và xử lý 401.
- *
- * ✅ ĐÚNG: import apiClient from '@/lib/api'
- * ❌ SAI:  import axios from 'axios' + tự gọi trực tiếp
- */
-const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1',
+const apiClient: AxiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
   timeout: 15000,
-})
+});
 
-// ─── Request Interceptor ─────────────────────────────────────────────────────
-// Tự động đính kèm token từ cookie vào mọi request
+// Interceptor for Request
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = Cookies.get(TOKEN_KEY)
+    const token = Cookies.get('token');
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return config
+    return config;
   },
-  (error) => Promise.reject(error)
-)
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-// ─── Response Interceptor ────────────────────────────────────────────────────
-// Xử lý lỗi global: 401 → redirect login
+// Interceptor for Response
 apiClient.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError) => {
+  (response: AxiosResponse) => {
+    // Unwrap the generic API Response so we don't have to keep doing res.data.data
+    return response.data;
+  },
+  (error) => {
+    // Handle 401 Unauthorized
     if (error.response?.status === 401) {
-      // Xóa token cũ và redirect về login
-      Cookies.remove(TOKEN_KEY)
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login'
+      Cookies.remove('token');
+      Cookies.remove('user');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login';
       }
     }
-    return Promise.reject(error)
+
+    // Format error to match ApiResponse structure
+    const formattedError = error.response?.data || {
+      success: false,
+      message: error.message || 'Có lỗi xảy ra',
+    };
+
+    return Promise.reject(formattedError);
   }
-)
+);
 
-// ─── Token Helpers ───────────────────────────────────────────────────────────
-export const setToken = (token: string) => {
-  Cookies.set(TOKEN_KEY, token, {
-    expires: 7,       // 7 ngày
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  })
-}
-
-export const removeToken = () => {
-  Cookies.remove(TOKEN_KEY)
-}
-
-export const getToken = () => Cookies.get(TOKEN_KEY)
-
-export default apiClient
+export default apiClient;

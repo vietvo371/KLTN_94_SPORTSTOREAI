@@ -9,8 +9,18 @@ use App\Models\SanPham;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 6. Quản trị viên (Admin)
+ * @subgroup Quản lý Đánh giá
+ * @authenticated
+ */
 class DanhGiaAdminController extends Controller
 {
+    /**
+     * Danh sách đánh giá (Admin)
+     *
+     * @queryParam da_duyet boolean Lọc theo trạng thái duyệt (true/false). Example: false
+     */
     public function index(Request $request): JsonResponse
     {
         $reviews = DanhGia::with('nguoiDung', 'sanPham')
@@ -19,6 +29,13 @@ class DanhGiaAdminController extends Controller
         return ApiResponse::paginate($reviews, '[Admin] Danh sách đánh giá');
     }
 
+    /**
+     * Duyệt đánh giá
+     *
+     * Admin xác nhận duyệt để đánh giá hiển thị công khai trên ứng dụng. Hệ thống tự tính lại sao trung bình của sản phẩm.
+     * 
+     * @urlParam id int required ID đánh giá. Example: 1
+     */
     public function approve(int $id): JsonResponse
     {
         $review = DanhGia::findOrFail($id);
@@ -33,6 +50,9 @@ class DanhGiaAdminController extends Controller
         return ApiResponse::success($review, '[Admin] Đã duyệt đánh giá');
     }
 
+    /**
+     * Xóa đánh giá
+     */
     public function destroy(int $id): JsonResponse
     {
         DanhGia::findOrFail($id)->delete();

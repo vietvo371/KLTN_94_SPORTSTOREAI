@@ -9,15 +9,38 @@ use App\Services\SanPhamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 6. Quản trị viên (Admin)
+ * @subgroup Quản lý Sản phẩm
+ * @authenticated
+ */
 class SanPhamAdminController extends Controller
 {
     public function __construct(private SanPhamService $service) {}
 
+    /**
+     * Danh sách sản phẩm (Admin)
+     *
+     * Lấy toàn bộ danh sách sản phẩm phục vụ trang quản trị.
+     */
     public function index(): JsonResponse
     {
         return ApiResponse::paginate($this->service->adminIndex(), '[Admin] Danh sách sản phẩm');
     }
 
+    /**
+     * Tạo sản phẩm mới
+     *
+     * @bodyParam ten_san_pham string required Tên sản phẩm. Example: Áo khoác thể thao
+     * @bodyParam danh_muc_id int required ID danh mục. Example: 1
+     * @bodyParam thuong_hieu_id int ID thương hiệu (nếu có). Example: 2
+     * @bodyParam gia_goc numeric required Giá nhập / Giá niêm yết. Example: 500000
+     * @bodyParam gia_khuyen_mai numeric Giá bán thực tế sau giảm. Example: 450000
+     * @bodyParam mo_ta_ngan string Mô tả ngắn. Example: Áo khoác dù chống nước
+     * @bodyParam mo_ta_day_du string Mô tả chi tiết (HTML). Example: <p>Chi tiết...</p>
+     * @bodyParam trang_thai boolean Có đang mở bán hay không. Example: true
+     * @bodyParam noi_bat boolean Có đưa lên danh sách nổi bật không. Example: false
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([

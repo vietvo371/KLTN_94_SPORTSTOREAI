@@ -8,12 +8,32 @@ use App\Models\MaGiamGia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 6. Quản trị viên (Admin)
+ * @subgroup Quản lý Mã giảm giá
+ * @authenticated
+ */
 class MaGiamGiaAdminController extends Controller
 {
+    /**
+     * Danh sách mã giảm giá (Admin)
+     */
     public function index(): JsonResponse
     {
         return ApiResponse::paginate(MaGiamGia::latest()->paginate(20), '[Admin] Danh sách mã giảm giá');
     }
+
+    /**
+     * Cấp mã giảm giá mới
+     *
+     * @bodyParam ma_code string required Mã code duy nhất. Example: SUMMER25
+     * @bodyParam loai_giam string required Loại giảm (phan_tram, so_tien_co_dinh). Example: phan_tram
+     * @bodyParam gia_tri numeric required Mức giảm (%, VNĐ). Example: 10
+     * @bodyParam gia_tri_don_hang_min numeric Đơn thiểu áp dụng. Example: 300000
+     * @bodyParam gioi_han_su_dung int Tổng lượt dùng tối đa. Example: 100
+     * @bodyParam bat_dau_luc date Thời gian khởi động. Example: 2025-06-01
+     * @bodyParam het_han_luc date Thời gian kết thúc. Example: 2025-06-30
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([

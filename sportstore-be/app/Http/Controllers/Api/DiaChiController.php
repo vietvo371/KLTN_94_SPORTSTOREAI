@@ -8,13 +8,34 @@ use App\Models\DiaChi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 4. Thông tin cá nhân & Địa chỉ
+ * @subgroup Sổ địa chỉ
+ *
+ * Quản lý sổ địa chỉ giao hàng của người dùng.
+ * @authenticated
+ */
 class DiaChiController extends Controller
 {
+    /**
+     * Danh sách địa chỉ
+     */
     public function index(Request $request): JsonResponse
     {
         return ApiResponse::success($request->user()->diaChi, 'Danh sách địa chỉ');
     }
 
+    /**
+     * Thêm địa chỉ mới
+     *
+     * @bodyParam ho_va_ten string required Họ và tên người nhận. Example: Nguyễn Văn B
+     * @bodyParam so_dien_thoai string required Số điện thoại nhận hàng. Example: 0988777666
+     * @bodyParam tinh_thanh string required Tỉnh/Thành phố. Example: Hà Nội
+     * @bodyParam quan_huyen string required Quận/Huyện. Example: Cầu Giấy
+     * @bodyParam phuong_xa string required Phường/Xã. Example: Dịch Vọng
+     * @bodyParam dia_chi_cu_the string required Số nhà, đường. Example: 123 Xuân Thủy
+     * @bodyParam la_mac_dinh boolean Đặt làm địa chỉ mặc định (true/false). Example: true
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -36,12 +57,29 @@ class DiaChiController extends Controller
         return ApiResponse::created($address, 'Đã thêm địa chỉ');
     }
 
+    /**
+     * Lấy chi tiết một địa chỉ
+     *
+     * @urlParam id int required ID của địa chỉ. Example: 1
+     */
     public function show(Request $request, int $id): JsonResponse
     {
         $address = DiaChi::where('nguoi_dung_id', $request->user()->id)->findOrFail($id);
         return ApiResponse::success($address, 'Chi tiết địa chỉ');
     }
 
+    /**
+     * Cập nhật địa chỉ
+     *
+     * @urlParam id int required ID của địa chỉ cần sửa. Example: 1
+     * @bodyParam ho_va_ten string Họ và tên người nhận. Example: Nguyễn Văn B
+     * @bodyParam so_dien_thoai string Số điện thoại nhận hàng. Example: 0988777666
+     * @bodyParam tinh_thanh string Tỉnh/Thành phố. Example: Hồ Chí Minh
+     * @bodyParam quan_huyen string Quận/Huyện. Example: Quận 1
+     * @bodyParam phuong_xa string Phường/Xã. Example: Bến Nghé
+     * @bodyParam dia_chi_cu_the string Số nhà, đường. Example: Tòa nhà Bitexco
+     * @bodyParam la_mac_dinh boolean Đặt làm địa chỉ mặc định (true/false). Example: true
+     */
     public function update(Request $request, int $id): JsonResponse
     {
         $address = DiaChi::where('nguoi_dung_id', $request->user()->id)->findOrFail($id);
@@ -61,6 +99,11 @@ class DiaChiController extends Controller
         return ApiResponse::success($address, 'Đã cập nhật địa chỉ');
     }
 
+    /**
+     * Xóa địa chỉ
+     *
+     * @urlParam id int required ID của địa chỉ cần xóa. Example: 1
+     */
     public function destroy(Request $request, int $id): JsonResponse
     {
         DiaChi::where('nguoi_dung_id', $request->user()->id)->findOrFail($id)->delete();

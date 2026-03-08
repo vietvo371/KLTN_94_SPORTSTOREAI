@@ -8,16 +8,39 @@ use App\Services\DonHangService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 3. Giỏ hàng & Thanh toán
+ * @subgroup Thanh toán & Lịch sử đơn hàng
+ *
+ * Cho phép khách hàng xem lịch sử mua hàng, chi tiết đơn và thực hiện đặt hàng (Checkout).
+ */
 class DonHangController extends Controller
 {
     public function __construct(private DonHangService $service) {}
 
+    /**
+     * Danh sách Đơn hàng
+     *
+     * Lấy danh sách lịch sử đơn hàng của người dùng đang đăng nhập. Có phân trang.
+     * @authenticated
+     */
     public function index(Request $request): JsonResponse
     {
         $orders = $this->service->getUserOrders($request->user());
         return ApiResponse::paginate($orders, 'Lịch sử đơn hàng');
     }
 
+    /**
+     * Đặt hàng (Checkout)
+     *
+     * Tạo đơn hàng mới từ các mặt hàng đang có trong Giỏ. Sau khi thanh toán thành công, giỏ hàng sẽ bị xóa.
+     * 
+     * @authenticated
+     * @bodyParam dia_chi_id int required ID địa chỉ giao hàng của người dùng. Example: 2
+     * @bodyParam phuong_thuc_tt string required Phương thức thanh toán (cod, chuyen_khoan, vnpay, momo). Example: cod
+     * @bodyParam ma_coupon string Mã giảm giá (nếu có áp dụng). Example: SALE2025
+     * @bodyParam ghi_chu string Ghi chú thêm cho đơn hàng. Example: Giao vào giờ hành chính
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -36,6 +59,14 @@ class DonHangController extends Controller
         return ApiResponse::created($donHang, 'Đặt hàng thành công');
     }
 
+    /**
+     * Chi tiết đơn hàng
+     *
+     * Xem chi tiết một đơn hàng thông qua Mã đơn hàng.
+     * 
+     * @authenticated
+     * @urlParam code string required Mã đơn hàng (VD: DH202503...). Example: DH202503050001
+     */
     public function show(Request $request, string $code): JsonResponse
     {
         $donHang = $this->service->getByCode($code, $request->user());

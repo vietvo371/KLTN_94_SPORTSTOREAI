@@ -8,8 +8,21 @@ use App\Models\MaGiamGia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 3. Giỏ hàng & Thanh toán
+ * @subgroup Mã giảm giá
+ */
 class MaGiamGiaController extends Controller
 {
+    /**
+     * Kiểm tra mã giảm giá
+     *
+     * Xác thực mã giảm giá do người dùng nhập trước khi áp dụng vào đơn hàng.
+     * Trả về số tiền được giảm nếu mã hợp lệ.
+     * 
+     * @bodyParam ma_code string required Mã giảm giá người dùng nhập. Example: SALE2025
+     * @bodyParam tam_tinh numeric required Tổng tiền tạm tính của giỏ hàng. Example: 500000
+     */
     public function validate(Request $request): JsonResponse
     {
         $data = $request->validate([

@@ -9,13 +9,27 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+/**
+ * @group 6. Quản trị viên (Admin)
+ * @subgroup Quản lý Danh mục
+ * @authenticated
+ */
 class DanhMucAdminController extends Controller
 {
+    /**
+     * Danh sách danh mục (Admin)
+     */
     public function index(): JsonResponse
     {
         return ApiResponse::success(DanhMuc::with('danhMucCon')->whereNull('danh_muc_cha_id')->get(), '[Admin] Danh mục');
     }
 
+    /**
+     * Tạo danh mục mới
+     *
+     * @bodyParam ten string required Tên danh mục. Example: Giày bóng đá
+     * @bodyParam danh_muc_cha_id int ID danh mục cha (Nếu là danh mục con). Example: null
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate(['ten' => 'required|string|max:100', 'danh_muc_cha_id' => 'nullable|integer|exists:danh_muc,id']);

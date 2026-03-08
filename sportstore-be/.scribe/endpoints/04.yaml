@@ -1,0 +1,513 @@
+name: '3. Giỏ hàng & Thanh toán'
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/cart
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: |-
+        Quản lý Giỏ hàng
+
+        Cho phép khách hàng thêm, sửa, xóa sản phẩm trong giỏ hàng.
+        Hỗ trợ cả khách vãng lai (lưu qua Header `X-Session-ID`) và người dùng đã đăng nhập (lưu qua User ID).
+      subgroupDescription: ''
+      title: 'Lấy thông tin giỏ hàng'
+      description: 'Lấy danh sách sản phẩm, tổng số lượng và số tiền tạm tính hiện có trong giỏ.'
+      authenticated: false
+      deprecated: false
+    headers:
+      X-Session-ID: 'ID phiên làm việc (nếu người dùng chưa đăng nhập)'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/cart/items
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: |-
+        Quản lý Giỏ hàng
+
+        Cho phép khách hàng thêm, sửa, xóa sản phẩm trong giỏ hàng.
+        Hỗ trợ cả khách vãng lai (lưu qua Header `X-Session-ID`) và người dùng đã đăng nhập (lưu qua User ID).
+      subgroupDescription: ''
+      title: 'Thêm sản phẩm vào giỏ'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      X-Session-ID: 'ID phiên làm việc (nếu người dùng chưa đăng nhập)'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      san_pham_id:
+        custom: []
+        name: san_pham_id
+        description: 'ID của sản phẩm muốn thêm.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      bien_the_id:
+        custom: []
+        name: bien_the_id
+        description: 'ID của biến thể (kích thước, màu sắc). Null nếu sản phẩm không có biến thể.'
+        required: false
+        example: null
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      so_luong:
+        custom: []
+        name: so_luong
+        description: 'Số lượng muốn thêm (1-99).'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      san_pham_id: 1
+      bien_the_id: null
+      so_luong: 1
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/v1/cart/items/{id}'
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: |-
+        Quản lý Giỏ hàng
+
+        Cho phép khách hàng thêm, sửa, xóa sản phẩm trong giỏ hàng.
+        Hỗ trợ cả khách vãng lai (lưu qua Header `X-Session-ID`) và người dùng đã đăng nhập (lưu qua User ID).
+      subgroupDescription: ''
+      title: 'Cập nhật số lượng sản phẩm'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      X-Session-ID: 'ID phiên làm việc (nếu người dùng chưa đăng nhập)'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'ID của item trong giỏ hàng (không phải san_pham_id)'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      so_luong:
+        custom: []
+        name: so_luong
+        description: 'Số lượng mới muốn cập nhật (1-99).'
+        required: true
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      so_luong: 2
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/cart/items/{id}'
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: |-
+        Quản lý Giỏ hàng
+
+        Cho phép khách hàng thêm, sửa, xóa sản phẩm trong giỏ hàng.
+        Hỗ trợ cả khách vãng lai (lưu qua Header `X-Session-ID`) và người dùng đã đăng nhập (lưu qua User ID).
+      subgroupDescription: ''
+      title: 'Xóa sản phẩm khỏi giỏ'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      X-Session-ID: 'ID phiên làm việc (nếu người dùng chưa đăng nhập)'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'ID của item trong giỏ hàng (không phải san_pham_id)'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: api/v1/cart
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: |-
+        Quản lý Giỏ hàng
+
+        Cho phép khách hàng thêm, sửa, xóa sản phẩm trong giỏ hàng.
+        Hỗ trợ cả khách vãng lai (lưu qua Header `X-Session-ID`) và người dùng đã đăng nhập (lưu qua User ID).
+      subgroupDescription: ''
+      title: 'Xóa toàn bộ giỏ hàng'
+      description: 'Dùng khi người dùng muốn dọn dẹp giỏ hoặc sau khi đặt hàng thành công.'
+      authenticated: false
+      deprecated: false
+    headers:
+      X-Session-ID: 'ID phiên làm việc (nếu người dùng chưa đăng nhập)'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/coupons/validate
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: 'Mã giảm giá'
+      subgroupDescription: ''
+      title: 'Kiểm tra mã giảm giá'
+      description: |-
+        Xác thực mã giảm giá do người dùng nhập trước khi áp dụng vào đơn hàng.
+        Trả về số tiền được giảm nếu mã hợp lệ.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      ma_code:
+        custom: []
+        name: ma_code
+        description: 'Mã giảm giá người dùng nhập.'
+        required: true
+        example: SALE2025
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      tam_tinh:
+        custom: []
+        name: tam_tinh
+        description: 'Tổng tiền tạm tính của giỏ hàng.'
+        required: true
+        example: '500000'
+        type: numeric
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      ma_code: SALE2025
+      tam_tinh: '500000'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/orders
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: |-
+        Thanh toán & Lịch sử đơn hàng
+
+        Cho phép khách hàng xem lịch sử mua hàng, chi tiết đơn và thực hiện đặt hàng (Checkout).
+      subgroupDescription: ''
+      title: 'Danh sách Đơn hàng'
+      description: 'Lấy danh sách lịch sử đơn hàng của người dùng đang đăng nhập. Có phân trang.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/orders
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: |-
+        Thanh toán & Lịch sử đơn hàng
+
+        Cho phép khách hàng xem lịch sử mua hàng, chi tiết đơn và thực hiện đặt hàng (Checkout).
+      subgroupDescription: ''
+      title: 'Đặt hàng (Checkout)'
+      description: 'Tạo đơn hàng mới từ các mặt hàng đang có trong Giỏ. Sau khi thanh toán thành công, giỏ hàng sẽ bị xóa.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      dia_chi_id:
+        custom: []
+        name: dia_chi_id
+        description: 'ID địa chỉ giao hàng của người dùng.'
+        required: true
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phuong_thuc_tt:
+        custom: []
+        name: phuong_thuc_tt
+        description: 'Phương thức thanh toán (cod, chuyen_khoan, vnpay, momo).'
+        required: true
+        example: cod
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      ma_coupon:
+        custom: []
+        name: ma_coupon
+        description: 'Mã giảm giá (nếu có áp dụng).'
+        required: false
+        example: SALE2025
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      ghi_chu:
+        custom: []
+        name: ghi_chu
+        description: 'Ghi chú thêm cho đơn hàng.'
+        required: false
+        example: 'Giao vào giờ hành chính'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      dia_chi_id: 2
+      phuong_thuc_tt: cod
+      ma_coupon: SALE2025
+      ghi_chu: 'Giao vào giờ hành chính'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/orders/{code}'
+    metadata:
+      custom: []
+      groupName: '3. Giỏ hàng & Thanh toán'
+      groupDescription: ''
+      subgroup: |-
+        Thanh toán & Lịch sử đơn hàng
+
+        Cho phép khách hàng xem lịch sử mua hàng, chi tiết đơn và thực hiện đặt hàng (Checkout).
+      subgroupDescription: ''
+      title: 'Chi tiết đơn hàng'
+      description: 'Xem chi tiết một đơn hàng thông qua Mã đơn hàng.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      code:
+        custom: []
+        name: code
+        description: 'Mã đơn hàng (VD: DH202503...).'
+        required: true
+        example: DH202503050001
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      code: DH202503050001
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

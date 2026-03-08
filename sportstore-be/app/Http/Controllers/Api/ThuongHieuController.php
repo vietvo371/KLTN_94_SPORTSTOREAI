@@ -7,8 +7,17 @@ use App\Http\Helpers\ApiResponse;
 use App\Models\ThuongHieu;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * @group 2. Sản phẩm & Danh mục (Khách hàng)
+ * @subgroup Thương hiệu
+ *
+ * Lấy danh sách thương hiệu đối tác của hệ thống.
+ */
 class ThuongHieuController extends Controller
 {
+    /**
+     * Danh sách thương hiệu
+     */
     public function index(): JsonResponse
     {
         $brands = ThuongHieu::where('trang_thai', true)

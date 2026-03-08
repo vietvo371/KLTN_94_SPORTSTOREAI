@@ -8,6 +8,13 @@ use App\Services\GioHangService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 3. Giỏ hàng & Thanh toán
+ * @subgroup Quản lý Giỏ hàng
+ *
+ * Cho phép khách hàng thêm, sửa, xóa sản phẩm trong giỏ hàng.
+ * Hỗ trợ cả khách vãng lai (lưu qua Header `X-Session-ID`) và người dùng đã đăng nhập (lưu qua User ID).
+ */
 class GioHangController extends Controller
 {
     public function __construct(private GioHangService $service) {}
@@ -20,6 +27,12 @@ class GioHangController extends Controller
         ];
     }
 
+    /**
+     * Lấy thông tin giỏ hàng
+     *
+     * Lấy danh sách sản phẩm, tổng số lượng và số tiền tạm tính hiện có trong giỏ.
+     * @header X-Session-ID ID phiên làm việc (nếu người dùng chưa đăng nhập)
+     */
     public function show(Request $request): JsonResponse
     {
         ['nguoiDungId' => $uid, 'maPhien' => $sid] = $this->getCartSession($request);
@@ -37,6 +50,14 @@ class GioHangController extends Controller
         ], 'Giỏ hàng');
     }
 
+    /**
+     * Thêm sản phẩm vào giỏ
+     *
+     * @header X-Session-ID ID phiên làm việc (nếu người dùng chưa đăng nhập)
+     * @bodyParam san_pham_id int required ID của sản phẩm muốn thêm. Example: 1
+     * @bodyParam bien_the_id int ID của biến thể (kích thước, màu sắc). Null nếu sản phẩm không có biến thể. Example: null
+     * @bodyParam so_luong int required Số lượng muốn thêm (1-99). Example: 1
+     */
     public function addItem(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -56,6 +77,13 @@ class GioHangController extends Controller
         return ApiResponse::created($item->load('sanPham', 'bienThe'), 'Đã thêm vào giỏ hàng');
     }
 
+    /**
+     * Cập nhật số lượng sản phẩm
+     *
+     * @urlParam id int required ID của item trong giỏ hàng (không phải san_pham_id)
+     * @header X-Session-ID ID phiên làm việc (nếu người dùng chưa đăng nhập)
+     * @bodyParam so_luong int required Số lượng mới muốn cập nhật (1-99). Example: 2
+     */
     public function updateItem(Request $request, int $id): JsonResponse
     {
         $data = $request->validate(['so_luong' => 'required|integer|min:1|max:99']);
@@ -66,6 +94,12 @@ class GioHangController extends Controller
         return ApiResponse::success($item, 'Đã cập nhật số lượng');
     }
 
+    /**
+     * Xóa sản phẩm khỏi giỏ
+     *
+     * @urlParam id int required ID của item trong giỏ hàng (không phải san_pham_id)
+     * @header X-Session-ID ID phiên làm việc (nếu người dùng chưa đăng nhập)
+     */
     public function removeItem(Request $request, int $id): JsonResponse
     {
         ['nguoiDungId' => $uid, 'maPhien' => $sid] = $this->getCartSession($request);
@@ -75,6 +109,12 @@ class GioHangController extends Controller
         return ApiResponse::deleted('Đã xóa sản phẩm khỏi giỏ hàng');
     }
 
+    /**
+     * Xóa toàn bộ giỏ hàng
+     *
+     * Dùng khi người dùng muốn dọn dẹp giỏ hoặc sau khi đặt hàng thành công.
+     * @header X-Session-ID ID phiên làm việc (nếu người dùng chưa đăng nhập)
+     */
     public function clear(Request $request): JsonResponse
     {
         ['nguoiDungId' => $uid, 'maPhien' => $sid] = $this->getCartSession($request);

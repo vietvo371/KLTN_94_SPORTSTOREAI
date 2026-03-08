@@ -9,8 +9,16 @@ use App\Models\YeuThich;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 4. Thông tin cá nhân & Địa chỉ
+ * @subgroup Yêu thích
+ * @authenticated
+ */
 class YeuThichController extends Controller
 {
+    /**
+     * Danh sách sản phẩm yêu thích
+     */
     public function index(Request $request): JsonResponse
     {
         $wishlist = YeuThich::where('nguoi_dung_id', $request->user()->id)
@@ -21,6 +29,13 @@ class YeuThichController extends Controller
         return ApiResponse::paginate($wishlist, 'Danh sách yêu thích');
     }
 
+    /**
+     * Thêm/Xóa yêu thích
+     *
+     * Tự động thêm sản phẩm vào danh sách yêu thích nếu chưa có, hoặc xóa khỏi danh sách nếu đã tồn tại.
+     * 
+     * @urlParam productId int required ID sản phẩm. Example: 1
+     */
     public function toggle(Request $request, int $productId): JsonResponse
     {
         $uid = $request->user()->id;

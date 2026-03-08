@@ -9,10 +9,20 @@ use App\Services\DonHangService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group 6. Quản trị viên (Admin)
+ * @subgroup Quản lý Đơn hàng
+ * @authenticated
+ */
 class DonHangAdminController extends Controller
 {
     public function __construct(private DonHangService $service) {}
 
+    /**
+     * Danh sách đơn hàng (Admin)
+     *
+     * @queryParam trang_thai string Lọc đơn hàng theo trạng thái (cho_xac_nhan, da_giao...). Example: cho_xac_nhan
+     */
     public function index(Request $request): JsonResponse
     {
         $orders = DonHang::with('nguoiDung')
@@ -21,12 +31,24 @@ class DonHangAdminController extends Controller
         return ApiResponse::paginate($orders, '[Admin] Danh sách đơn hàng');
     }
 
+    /**
+     * Chi tiết đơn hàng (Admin)
+     *
+     * @urlParam id int required ID đơn hàng. Example: 1
+     */
     public function show(int $id): JsonResponse
     {
         $order = DonHang::with(['items.sanPham', 'nguoiDung', 'lichSuTrangThai', 'thanhToan'])->findOrFail($id);
         return ApiResponse::success($order, '[Admin] Chi tiết đơn hàng');
     }
 
+    /**
+     * Cập nhật trạng thái đơn
+     *
+     * @urlParam id int required ID đơn hàng. Example: 1
+     * @bodyParam trang_thai string required Trạng thái mới (cho_xac_nhan, da_xac_nhan, dang_xu_ly, dang_giao, da_giao, da_huy, hoan_tra). Example: da_xac_nhan
+     * @bodyParam ghi_chu string Ghi chú cập nhật (VD: Đã gọi xác nhận). Example: Khách hàng đồng ý giao chiều nay.
+     */
     public function updateStatus(Request $request, int $id): JsonResponse
     {
         $data = $request->validate([

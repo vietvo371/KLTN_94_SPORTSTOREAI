@@ -10,7 +10,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-    const mainImage = product.hinh_anh_san_pham?.find((img) => img.la_anh_chinh)?.url
+    const mainImage = product.anh_chinh?.url
+        || product.hinh_anh_san_pham?.find((img) => img.la_anh_chinh)?.url
         || product.hinh_anh_san_pham?.[0]?.url
         || '/placeholder.png'; // Fallback image
 

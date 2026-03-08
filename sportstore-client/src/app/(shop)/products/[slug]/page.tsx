@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { use } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
     const { slug } = use(params);
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(1);
+    const [activeImage, setActiveImage] = useState<string>('/placeholder.png');
     const { openCart, setItemCount } = useCartStore(); // Using dummy setItemCount for now
 
     const { data: product, isLoading, isError } = useQuery({
         queryKey: ['product', slug],
         queryFn: () => productService.getProductBySlug(slug),
     });
+
+    // Sync active image when product is loaded
+    useEffect(() => {
+        if (product) {
+            const imagesList = product.hinh_anh || product.hinh_anh_san_pham;
+            const initialImage = product.anh_chinh?.url
+                || imagesList?.find((img) => img.la_anh_chinh)?.url
+                || imagesList?.[0]?.url
+                || '/placeholder.png';
+            setActiveImage(initialImage);
+        }
+    }, [product]);
 
     if (isLoading) {
         return (
@@ -42,12 +55,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
         return notFound();
     }
 
-    const mainImage = product.hinh_anh_san_pham?.find((img) => img.la_anh_chinh)?.url
-        || product.hinh_anh_san_pham?.[0]?.url
-        || '/placeholder.png';
+    const imagesList = product.hinh_anh || product.hinh_anh_san_pham;
 
     // Extract unique sizes from variants
-    const sizes = Array.from(new Set(product.bien_the_san_pham?.map(v => v.kich_co).filter(Boolean))) as string[];
+    const sizes = Array.from(new Set(product.bien_the?.map(v => v.kich_co).filter(Boolean) || product.bien_the_san_pham?.map(v => v.kich_co).filter(Boolean))) as string[];
     const currentPrice = product.gia_khuyen_mai || product.gia_goc;
 
     const handleAddToCart = () => {
@@ -63,7 +74,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                 <div className="w-full md:w-1/2 space-y-4">
                     <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-50 border">
                         <Image
-                            src={mainImage}
+                            src={activeImage}
                             alt={product.ten_san_pham}
                             fill
                             className="object-cover"
@@ -74,13 +85,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                         )}
                     </div>
 
-                    {product.hinh_anh_san_pham && product.hinh_anh_san_pham.length > 1 && (
+                    {imagesList && imagesList.length > 1 && (
                         <div className="flex gap-4 overflow-x-auto pb-2">
-                            {product.hinh_anh_san_pham.map((img) => (
-                                <div key={img.id} className="relative w-20 h-20 rounded-lg overflow-hidden border shrink-0 cursor-pointer hover:ring-2 ring-primary">
-                                    <Image src={img.url || img.duong_dan_anh} alt="Thumnail" fill className="object-cover" />
-                                </div>
-                            ))}
+                            {imagesList.map((img) => {
+                                const imgUrl = img.url || img.duong_dan_anh || '';
+                                return (
+                                    <div
+                                        key={img.id}
+                                        onClick={() => setActiveImage(imgUrl)}
+                                        className={`relative w-20 h-20 rounded-lg overflow-hidden border shrink-0 cursor-pointer hover:ring-2 ring-primary transition-all ${activeImage === imgUrl ? 'ring-2 ring-primary border-primary' : 'border-slate-200'}`}
+                                    >
+                                        <Image src={imgUrl} alt="Thumbnail" fill className="object-cover" />
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

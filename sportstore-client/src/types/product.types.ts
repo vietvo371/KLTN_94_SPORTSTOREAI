@@ -62,6 +62,9 @@ export interface Product {
     // Relationships(optional, based on API response inclusion)
     danh_muc?: Category;
     thuong_hieu?: Brand;
-    bien_the_san_pham?: ProductVariant[];
-    hinh_anh_san_pham?: ProductImage[];
+    bien_the_san_pham?: ProductVariant[]; // Dùng trong danh sách cũ
+    bien_the?: ProductVariant[]; // Dùng trong chi tiết sản phẩm / danh sách mới
+    hinh_anh_san_pham?: ProductImage[]; // Dùng trong danh sách cũ
+    hinh_anh?: ProductImage[]; // Dùng trong chi tiết sản phẩm / danh sách mới
+    anh_chinh?: ProductImage;
 }

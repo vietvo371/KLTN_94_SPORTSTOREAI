@@ -69,6 +69,7 @@ class SanPhamSeeder extends Seeder
                 'danh_muc_id'    => $catId,
                 'thuong_hieu_id' => $wikaBrandId,
                 'so_luong_ton_kho'=> 100,
+                'noi_bat'        => $count < 12 ? true : false,
                 'trang_thai'     => true,
                 'created_at'     => $now,
                 'updated_at'     => $now,

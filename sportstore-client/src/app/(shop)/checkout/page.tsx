@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 import { MapPin, CreditCard, ShoppingBag, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
+import { AddAddressModal } from '@/components/checkout/AddAddressModal';
+
 export default function CheckoutPage() {
     const router = useRouter();
     const { cart, isLoading: isCartLoading } = useCart();
@@ -124,12 +126,14 @@ export default function CheckoutPage() {
                                             </div>
                                         </div>
                                     ))}
+                                    <div className="pt-2">
+                                        <AddAddressModal />
+                                    </div>
                                 </RadioGroup>
                             ) : (
                                 <div className="text-center p-6 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
                                     <p className="text-muted-foreground mb-4">Bạn chưa có địa chỉ giao hàng nào.</p>
-                                    {/* In a complete flow, this would open a modal to add an address */}
-                                    <Button variant="outline">Thêm địa chỉ mới</Button>
+                                    <AddAddressModal />
                                 </div>
                             )}
                         </CardContent>

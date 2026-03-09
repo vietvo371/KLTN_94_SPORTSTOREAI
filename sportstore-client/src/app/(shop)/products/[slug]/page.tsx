@@ -3,15 +3,15 @@
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { use } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { useState, useEffect, use } from 'react';
+import { ShoppingCart, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { productService } from '@/services/product.service';
 import { formatCurrency } from '@/lib/utils';
 import { useCartStore } from '@/store/cart.store';
 import { useCart } from '@/hooks/useCart';
+import { useWishlist } from '@/hooks/useWishlist';
 import { toast } from 'sonner';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -19,13 +19,29 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(1);
     const [activeImage, setActiveImage] = useState<string>('/placeholder.png');
+
     const { openCart } = useCartStore();
     const { addToCart, isAdding } = useCart();
+    const { wishlistData, toggleWishlist, isToggling } = useWishlist();
 
     const { data: product, isLoading, isError } = useQuery({
         queryKey: ['product', slug],
         queryFn: () => productService.getProductBySlug(slug),
     });
+
+    const isWished = wishlistData?.data?.some(item => item.san_pham_id === product?.id) || false;
+
+    const handleWishlist = async () => {
+        if (!product) return;
+        try {
+            await toggleWishlist(product.id);
+            if (!isWished) {
+                toast.success('Đã thêm vào yêu thích!');
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Lỗi khi yêu thích sản phẩm');
+        }
+    };
 
     // Sync active image when product is loaded
     useEffect(() => {
@@ -200,12 +216,23 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
 
                         <Button
                             size="lg"
-                            className="flex-1 h-14 text-base gap-2"
+                            className="flex-1 h-14 text-base gap-2 shadow-lg shadow-primary/20"
                             onClick={handleAddToCart}
                             disabled={isAdding}
                         >
                             <ShoppingCart className="h-5 w-5" />
                             {isAdding ? 'Đang thêm...' : 'Thêm Vào Giỏ'}
+                        </Button>
+
+                        <Button
+                            size="icon"
+                            variant="outline"
+                            className={`h-14 w-14 border-slate-200 transition-all ${isWished ? 'text-rose-500 border-rose-200 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-slate-900 bg-white hover:bg-slate-50'}`}
+                            onClick={handleWishlist}
+                            disabled={isToggling}
+                            title={isWished ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                        >
+                            <Heart className="h-6 w-6" fill={isWished ? 'currentColor' : 'none'} />
                         </Button>
                     </div>
                 </div>

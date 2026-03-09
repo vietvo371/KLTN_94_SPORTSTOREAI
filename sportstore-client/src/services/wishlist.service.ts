@@ -7,11 +7,11 @@ export const wishlistService = {
         const response: any = await apiClient.get('/wishlist', {
             params: { page }
         });
-        return response.data;
+        return response;
     },
 
     toggleWishlist: async (productId: number): Promise<void> => {
         const response: any = await apiClient.post(`/wishlist/${productId}`);
-        return response.data;
+        return response;
     },
 };

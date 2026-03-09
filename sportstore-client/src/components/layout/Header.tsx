@@ -2,16 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, User, Search, Menu, LogOut, Package } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ShoppingCart, User, Search, Menu, LogOut, Package, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cart.store';
 import { useAuthStore } from '@/store/auth.store';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
+import { useCategories } from '@/hooks/useCategory';
+
 export function Header() {
     const { itemCount, openCart } = useCartStore();
     const { isAuthenticated, user, logout } = useAuthStore();
     const [isMounted, setIsMounted] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const router = useRouter();
+    const { data: categories } = useCategories();
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
 
     useEffect(() => {
         setIsMounted(true);
@@ -41,14 +54,29 @@ export function Header() {
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                         <Link href="/products" className="transition-colors hover:text-primary">
-                            Giày bóng đá
+                            Tất cả sản phẩm
                         </Link>
-                        <Link href="/products?category=ao-quan" className="transition-colors hover:text-primary">
-                            Quần áo
-                        </Link>
-                        <Link href="/products?category=phu-kien" className="transition-colors hover:text-primary">
-                            Phụ kiện
-                        </Link>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-primary focus:outline-none data-[state=open]:text-primary">
+                                Danh mục
+                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="mt-[2px] opacity-70"><path d="M4.18179 6.18181C4.35753 6.00608 4.64245 6.00608 4.81819 6.18181L7.49999 8.86362L10.1818 6.18181C10.3575 6.00608 10.6424 6.00608 10.8182 6.18181C10.9939 6.35755 10.9939 6.64247 10.8182 6.81821L7.81819 9.81821C7.73379 9.9026 7.61934 9.95001 7.49999 9.95001C7.38064 9.95001 7.26618 9.9026 7.18179 9.81821L4.18179 6.81821C4.00605 6.64247 4.00605 6.35755 4.18179 6.18181Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56 max-h-[300px] overflow-y-auto" align="start">
+                                {categories && categories.length > 0 ? (
+                                    categories.map((cat: any) => (
+                                        <DropdownMenuItem key={cat.id} asChild className="cursor-pointer">
+                                            <Link href={`/products?category=${cat.duong_dan}`}>
+                                                {cat.ten}
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    ))
+                                ) : (
+                                    <div className="p-2 text-sm text-slate-500 text-center">Đang tải...</div>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <Link href="/#brands" className="transition-colors hover:text-primary">
                             Thương hiệu
                         </Link>
@@ -56,10 +84,19 @@ export function Header() {
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-2 sm:gap-4">
-                        <Button variant="ghost" size="icon" className="hidden sm:flex" aria-label="Tìm kiếm">
-                            <Search className="h-5 w-5" />
-                        </Button>
-
+                        {/* Search Input */}
+                        <form onSubmit={handleSearch} className="hidden sm:flex items-center relative gap-1">
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-48 lg:w-64 h-9 px-3 pr-10 rounded-full border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                            />
+                            <Button type="submit" variant="ghost" size="icon" className="absolute right-0 h-9 w-9 text-slate-500 hover:text-primary hover:bg-transparent rounded-r-full">
+                                <Search className="h-4 w-4" />
+                            </Button>
+                        </form>
                         {isMounted && (
                             isAuthenticated ? (
                                 <DropdownMenu>
@@ -83,8 +120,14 @@ export function Header() {
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild className="cursor-pointer py-2">
                                             <Link href="/profile/orders" className="flex items-center w-full">
-                                                <ShoppingCart className="mr-2 h-4 w-4 text-slate-500" />
+                                                <Package className="mr-2 h-4 w-4 text-slate-500" />
                                                 <span>Đơn mua</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild className="cursor-pointer py-2">
+                                            <Link href="/profile/wishlist" className="flex items-center w-full">
+                                                <Heart className="mr-2 h-4 w-4 text-slate-500" />
+                                                <span>Sản phẩm yêu thích</span>
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={logout} className="cursor-pointer py-2 text-red-600 focus:text-red-600 focus:bg-red-50 mt-1">

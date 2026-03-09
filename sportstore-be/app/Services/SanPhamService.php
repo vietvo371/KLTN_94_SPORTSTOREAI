@@ -18,7 +18,14 @@ class SanPhamService
 
         // Lọc theo danh mục
         if (!empty($filters['danh_muc'])) {
-            $query->where('danh_muc_id', $filters['danh_muc']);
+            $danhMuc = $filters['danh_muc'];
+            if (is_numeric($danhMuc)) {
+                $query->where('danh_muc_id', $danhMuc);
+            } else {
+                $query->whereHas('danhMuc', function ($q) use ($danhMuc) {
+                    $q->where('duong_dan', $danhMuc);
+                });
+            }
         }
 
         // Lọc theo thương hiệu

@@ -19,7 +19,16 @@ export const productService = {
 
     getProducts: async (params: any = {}): Promise<PaginatedResponse<Product>> => {
         try {
-            const response: any = await apiClient.get('/products', { params });
+            // Map frontend params to backend expected params
+            const apiParams = {
+                ...params,
+                tu_khoa: params.search,
+                danh_muc: params.category,
+            };
+            delete apiParams.search;
+            delete apiParams.category;
+
+            const response: any = await apiClient.get('/products', { params: apiParams });
             return response as PaginatedResponse<Product>;
         } catch (error) {
             console.error('Failed to fetch products API:', error);

@@ -6,12 +6,15 @@ import { useSearchParams } from 'next/navigation';
 import { productService } from '@/services/product.service';
 import { ProductCard } from '@/components/product/ProductCard';
 import { Button } from '@/components/ui/button';
+import { useCategories } from '@/hooks/useCategory';
 
 function ProductsContent() {
     const searchParams = useSearchParams();
     const page = Number(searchParams.get('page')) || 1;
     const category = searchParams.get('category') || '';
     const search = searchParams.get('search') || '';
+
+    const { data: categories, isLoading: categoriesLoading } = useCategories();
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['products', { page, category, search }],
@@ -33,12 +36,34 @@ function ProductsContent() {
                 <div className="w-full md:w-64 shrink-0">
                     <div className="sticky top-24 bg-white p-4 rounded-xl border">
                         <h3 className="font-semibold mb-4 text-lg">Danh Mục</h3>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li><a href="/products" className="hover:text-primary transition-colors">Tất cả sản phẩm</a></li>
-                            <li><a href="/products?category=giay-bong-da" className="hover:text-primary transition-colors">Giày bóng đá</a></li>
-                            <li><a href="/products?category=ao-quan" className="hover:text-primary transition-colors">Quần áo thể thao</a></li>
-                            <li><a href="/products?category=phu-kien" className="hover:text-primary transition-colors">Phụ kiện</a></li>
-                        </ul>
+                        {categoriesLoading ? (
+                            <div className="space-y-3">
+                                <div className="h-4 bg-slate-100 rounded animate-pulse w-3/4"></div>
+                                <div className="h-4 bg-slate-100 rounded animate-pulse w-1/2"></div>
+                                <div className="h-4 bg-slate-100 rounded animate-pulse w-5/6"></div>
+                            </div>
+                        ) : (
+                            <ul className="space-y-2 text-sm text-muted-foreground flex flex-col max-h-[60vh] overflow-y-auto pr-2">
+                                <li>
+                                    <a
+                                        href="/products"
+                                        className={`transition-colors block py-1 ${!category ? 'text-primary font-semibold' : 'hover:text-primary'}`}
+                                    >
+                                        Tất cả sản phẩm
+                                    </a>
+                                </li>
+                                {categories?.map((cat: any) => (
+                                    <li key={cat.id}>
+                                        <a
+                                            href={`/products?category=${cat.duong_dan}`}
+                                            className={`transition-colors block py-1 ${category === cat.duong_dan ? 'text-primary font-semibold' : 'hover:text-primary'}`}
+                                        >
+                                            {cat.ten}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
 

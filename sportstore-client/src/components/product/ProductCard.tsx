@@ -44,8 +44,8 @@ export function ProductCard({ product }: ProductCardProps) {
         : 0;
 
     return (
-        <Link href={`/products/${product.duong_dan}`}>
-            <Card className="group overflow-hidden transition-all hover:shadow-lg border-0 bg-slate-50/50">
+        <Link href={`/products/${product.duong_dan}`} className="block h-full">
+            <Card className="group flex flex-col h-full overflow-hidden transition-all hover:shadow-lg border-0 bg-slate-50/50">
                 <CardContent className="p-0 relative aspect-square">
                     <Button
                         variant="ghost"
@@ -73,13 +73,15 @@ export function ProductCard({ product }: ProductCardProps) {
                         )}
                     </div>
                 </CardContent>
-                <CardFooter className="flex flex-col items-start p-4 gap-2">
-                    {product.thuong_hieu && (
-                        <span className="text-xs text-muted-foreground uppercase font-semibold">
+                <CardFooter className="flex flex-col flex-1 items-start p-4 gap-2">
+                    {product.thuong_hieu ? (
+                        <span className="text-xs text-muted-foreground uppercase font-semibold h-4">
                             {product.thuong_hieu.ten}
                         </span>
+                    ) : (
+                        <span className="h-4" /> // Placeholder for alignment
                     )}
-                    <h3 className="font-medium line-clamp-2 text-sm md:text-base group-hover:text-primary transition-colors">
+                    <h3 className="font-medium line-clamp-2 text-sm md:text-base group-hover:text-primary transition-colors min-h-[2.5rem] md:min-h-[3rem]">
                         {product.ten_san_pham}
                     </h3>
                     <div className="flex items-center gap-2 mt-auto pt-2">

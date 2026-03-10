@@ -102,13 +102,11 @@ export function UserTable({ users, onEdit }: UserTableProps) {
                                 </TableCell>
                                 <TableCell className="py-6 text-center">
                                     {user.vai_tro === 'quan_tri' ? (
-                                        <Badge className="bg-amber-50 text-amber-600 border-amber-100 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-xl gap-1.5 shadow-sm shadow-amber-200/20">
-                                            <ShieldCheck className="h-3.5 w-3.5" />
+                                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
                                             Admin
                                         </Badge>
                                     ) : (
-                                        <Badge className="bg-blue-50 text-blue-600 border-blue-100 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-xl gap-1.5 shadow-sm shadow-blue-200/20">
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
                                             User
                                         </Badge>
                                     )}
@@ -118,15 +116,13 @@ export function UserTable({ users, onEdit }: UserTableProps) {
                                 </TableCell>
                                 <TableCell className="py-6 text-center">
                                     {user.trang_thai ? (
-                                        <div className="flex items-center justify-center gap-1.5 text-emerald-500 font-black text-[10px] uppercase tracking-widest">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
                                             Hoạt động
-                                        </div>
+                                        </Badge>
                                     ) : (
-                                        <div className="flex items-center justify-center gap-1.5 text-rose-500 font-black text-[10px] uppercase tracking-widest">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                                        <Badge variant="secondary" className="bg-slate-100 text-slate-800 hover:bg-slate-100">
                                             Đã khoá
-                                        </div>
+                                        </Badge>
                                     )}
                                 </TableCell>
                                 <TableCell className="py-6 px-8 text-right">
@@ -156,26 +152,21 @@ export function UserTable({ users, onEdit }: UserTableProps) {
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </AlertDialogTrigger>
-                                                <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
-                                                    <div className="p-8 pb-0">
-                                                        <div className="h-14 w-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 mb-6 border border-rose-100">
-                                                            <AlertCircle className="h-7 w-7" />
-                                                        </div>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Xoá người dùng này?</AlertDialogTitle>
-                                                            <AlertDialogDescription className="text-slate-500 font-medium leading-relaxed mt-2">
-                                                                Tài khoản của <span className="font-black text-slate-900">"{user.ho_va_ten}"</span> sẽ bị xoá vĩnh viễn khỏi hệ thống. Hành động này không thể hoàn tác.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                    </div>
-                                                    <AlertDialogFooter className="p-8 pt-6 gap-3 sm:justify-start">
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Xoá người dùng này?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Tài khoản của <span className="font-medium text-slate-900">"{user.ho_va_ten}"</span> sẽ bị xoá vĩnh viễn khỏi hệ thống. Hành động này không thể hoàn tác.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Huỷ bỏ</AlertDialogCancel>
                                                         <AlertDialogAction
-                                                            className="h-12 flex-1 rounded-2xl bg-rose-500 hover:bg-rose-600 font-black text-xs uppercase tracking-widest text-white shadow-lg shadow-rose-200"
+                                                            className="bg-rose-500 hover:bg-rose-600 text-white"
                                                             onClick={() => deleteUser.mutate(user.id)}
                                                         >
                                                             Xác nhận xoá
                                                         </AlertDialogAction>
-                                                        <AlertDialogCancel className="h-12 px-6 rounded-2xl border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Huỷ bỏ</AlertDialogCancel>
                                                     </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>

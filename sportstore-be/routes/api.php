@@ -102,6 +102,11 @@ Route::middleware('auth:sanctum')->group(function () {
         // Users management
         Route::apiResource('users', \App\Http\Controllers\Api\Admin\NguoiDungAdminController::class);
 
+        // Reports & Statistics
+        Route::get('reports/overview',      [\App\Http\Controllers\Api\Admin\ReportAdminController::class, 'overview']);
+        Route::get('reports/revenue-chart', [\App\Http\Controllers\Api\Admin\ReportAdminController::class, 'revenueChart']);
+        Route::get('reports/top-products',  [\App\Http\Controllers\Api\Admin\ReportAdminController::class, 'topProducts']);
+
         // Upload
         Route::post('upload', [\App\Http\Controllers\Api\Admin\UploadController::class, 'upload']);
     });

@@ -11,7 +11,8 @@ import {
     Ticket,
     Users,
     Settings,
-    Home
+    Home,
+    BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +23,8 @@ const sidebarItems = [
     { name: 'Đơn hàng', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Đánh giá', href: '/admin/reviews', icon: Star },
     { name: 'Mã giảm giá', href: '/admin/coupons', icon: Ticket },
-    { name: 'Người dùng', href: '/admin/users', icon: Users },
+    { name: 'Khách hàng', href: '/admin/users', icon: Users },
+    { name: 'Xếp hạng & Thống kê', href: '/admin/reports', icon: BarChart3 },
 ];
 
 interface AdminSidebarProps {

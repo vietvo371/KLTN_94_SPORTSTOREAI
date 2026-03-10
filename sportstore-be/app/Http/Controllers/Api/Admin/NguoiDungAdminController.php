@@ -64,6 +64,9 @@ class NguoiDungAdminController extends Controller
         $data = $request->validate([
             'vai_tro'    => 'sometimes|in:khach_hang,quan_tri',
             'trang_thai' => 'sometimes|boolean',
+        ], [
+            'vai_tro.in' => 'Vai trò được chọn không hợp lệ.',
+            'trang_thai.boolean' => 'Trạng thái hoạt động không hợp lệ.',
         ]);
 
         $user->update($data);

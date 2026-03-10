@@ -70,23 +70,13 @@ export function UserEditDialog({ open, onOpenChange, user }: UserEditDialogProps
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[450px] rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-                <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-32 -mt-32" />
-                    <div className="relative z-10 space-y-2">
-                        <div className="flex items-center gap-3">
-                            <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10 shadow-lg">
-                                <UserCog className="h-6 w-6 text-primary" />
-                            </div>
-                            <DialogTitle className="text-2xl font-black tracking-tight uppercase">
-                                Thiết lập tài khoản
-                            </DialogTitle>
-                        </div>
-                        <DialogDescription className="text-slate-400 font-medium">
-                            Chỉnh sửa quyền hạn và trạng thái hoạt động của người dùng
-                        </DialogDescription>
-                    </div>
-                </div>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Thiết lập tài khoản</DialogTitle>
+                    <DialogDescription>
+                        Chỉnh sửa quyền hạn và trạng thái hoạt động của người dùng
+                    </DialogDescription>
+                </DialogHeader>
 
                 <div className="p-8">
                     <Form {...form}>
@@ -111,33 +101,19 @@ export function UserEditDialog({ open, onOpenChange, user }: UserEditDialogProps
                                     name="vai_tro"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Vai trò hệ thống</FormLabel>
+                                            <FormLabel>Vai trò hệ thống</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger className="h-14 bg-slate-50 border-slate-100 rounded-2xl font-bold text-slate-900 focus:ring-primary/20 transition-all">
+                                                    <SelectTrigger>
                                                         <SelectValue placeholder="Chọn vai trò" />
                                                     </SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent className="rounded-2xl border-slate-100 shadow-xl p-1">
-                                                    <SelectItem value="khach_hang" className="rounded-xl font-bold py-3 px-4 focus:bg-slate-50">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
-                                                                <CheckCircle2 className="h-4 w-4" />
-                                                            </div>
-                                                            <span>Khách hàng</span>
-                                                        </div>
-                                                    </SelectItem>
-                                                    <SelectItem value="quan_tri" className="rounded-xl font-bold py-3 px-4 focus:bg-slate-50">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
-                                                                <ShieldCheck className="h-4 w-4" />
-                                                            </div>
-                                                            <span>Quản trị viên</span>
-                                                        </div>
-                                                    </SelectItem>
+                                                <SelectContent>
+                                                    <SelectItem value="khach_hang">Không cấp quyền admin</SelectItem>
+                                                    <SelectItem value="quan_tri">Cấp quyền admin</SelectItem>
                                                 </SelectContent>
                                             </Select>
-                                            <FormMessage className="text-[10px] font-bold" />
+                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />
@@ -146,26 +122,19 @@ export function UserEditDialog({ open, onOpenChange, user }: UserEditDialogProps
                                     control={form.control}
                                     name="trang_thai"
                                     render={({ field }) => (
-                                        <FormItem className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-sm font-black text-slate-900">Trạng thái tài khoản</FormLabel>
-                                                <div className="flex items-center gap-2">
-                                                    {field.value ? (
-                                                        <span className="text-[10px] font-black text-emerald-500 uppercase flex items-center gap-1.5">
-                                                            <CheckCircle2 className="h-3 w-3" /> Tài khoản đang hoạt động
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] font-black text-rose-500 uppercase flex items-center gap-1.5">
-                                                            <Ban className="h-3 w-3" /> Tài khoản đang bị khoá
-                                                        </span>
-                                                    )}
+                                                <FormLabel className="text-base">
+                                                    Trạng thái hoạt động
+                                                </FormLabel>
+                                                <div className="text-sm text-slate-500">
+                                                    {field.value ? "Tài khoản đang mở" : "Tài khoản đang bị khóa"}
                                                 </div>
                                             </div>
                                             <FormControl>
                                                 <Switch
                                                     checked={field.value}
                                                     onCheckedChange={field.onChange}
-                                                    className="data-[state=checked]:bg-emerald-500"
                                                 />
                                             </FormControl>
                                         </FormItem>
@@ -173,22 +142,13 @@ export function UserEditDialog({ open, onOpenChange, user }: UserEditDialogProps
                                 />
                             </div>
 
-                            <DialogFooter className="gap-3 sm:justify-start">
-                                <Button
-                                    type="submit"
-                                    className="h-14 flex-1 rounded-[1.25rem] bg-slate-900 hover:bg-slate-800 text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 transition-all active:scale-95 disabled:opacity-50"
-                                    disabled={updateUser.isPending}
-                                >
-                                    {updateUser.isPending ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
-                                    Lưu thay đổi
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="h-14 rounded-[1.25rem] border-slate-100 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all px-8"
-                                    onClick={() => onOpenChange(false)}
-                                >
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                     Hủy
+                                </Button>
+                                <Button type="submit" disabled={updateUser.isPending}>
+                                    {updateUser.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                    Lưu thay đổi
                                 </Button>
                             </DialogFooter>
                         </form>

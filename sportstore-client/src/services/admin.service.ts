@@ -76,6 +76,42 @@ export const adminService = {
             },
         });
     },
+
+    // Orders
+    getOrders: async (params: any = {}): Promise<PaginatedResponse<any>> => {
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                queryParams.append(key, String(value));
+            }
+        });
+        const queryString = queryParams.toString();
+        return apiClient.get(`/admin/orders${queryString ? `?${queryString}` : ''}`);
+    },
+    getOrder: async (id: number): Promise<ApiResponse<any>> => {
+        return apiClient.get(`/admin/orders/${id}`);
+    },
+    updateOrderStatus: async (id: number, data: { trang_thai: string; ghi_chu?: string }): Promise<ApiResponse<any>> => {
+        return apiClient.put(`/admin/orders/${id}/status`, data);
+    },
+
+    // Reviews
+    getReviews: async (params: any = {}): Promise<PaginatedResponse<any>> => {
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                queryParams.append(key, String(value));
+            }
+        });
+        const queryString = queryParams.toString();
+        return apiClient.get(`/admin/reviews${queryString ? `?${queryString}` : ''}`);
+    },
+    approveReview: async (id: number): Promise<ApiResponse<any>> => {
+        return apiClient.put(`/admin/reviews/${id}/approve`);
+    },
+    deleteReview: async (id: number): Promise<ApiResponse<any>> => {
+        return apiClient.delete(`/admin/reviews/${id}`);
+    },
 };
 
 export const adminKeys = {

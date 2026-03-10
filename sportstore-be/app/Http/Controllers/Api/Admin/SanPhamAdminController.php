@@ -52,6 +52,7 @@ class SanPhamAdminController extends Controller
             'mo_ta_ngan'     => 'required|string|min:10|max:500',
             'mo_ta_day_du'   => 'required|string|min:20',
             'trang_thai'     => 'boolean',
+            'noi_bat'        => 'boolean',
             'ma_sku'         => 'required|string|max:100|unique:san_pham,ma_sku',
             // Biến thể
             'bien_the'             => 'required|array|min:1',
@@ -100,6 +101,7 @@ class SanPhamAdminController extends Controller
             'mo_ta_ngan'     => 'sometimes|string|min:10|max:500',
             'mo_ta_day_du'   => 'sometimes|string|min:20',
             'trang_thai'     => 'boolean',
+            'noi_bat'        => 'boolean',
             'ma_sku'         => 'sometimes|string|max:100|unique:san_pham,ma_sku,' . $id,
             // Biến thể
             'bien_the'             => 'sometimes|array|min:1',
@@ -115,8 +117,13 @@ class SanPhamAdminController extends Controller
         ], [
             'ten_san_pham.min' => 'Tên sản phẩm phải có ít nhất 5 ký tự.',
             'gia_khuyen_mai.lt' => 'Giá khuyến mãi phải nhỏ hơn giá gốc.',
+            'mo_ta_ngan.required' => 'Mô tả ngắn là bắt buộc để hiển thị ở danh sách.',
+            'mo_ta_day_du.required' => 'Chi tiết sản phẩm không được để trống.',
             'ma_sku.unique' => 'Mã SKU này đã tồn tại trên hệ thống.',
+            'bien_the.required' => 'Sản phẩm phải có ít nhất một phân loại (Size/Màu).',
+            'hinh_anh.required' => 'Vui lòng upload ít nhất một hình ảnh sản phẩm.',
         ]);
+
         // Cập nhật slug nếu tên sản phẩm thay đổi
         if (isset($data['ten_san_pham']) && $data['ten_san_pham'] !== $product->ten_san_pham) {
             $data['duong_dan'] = $this->service->generateUniqueSlug($data['ten_san_pham'], $product->id);

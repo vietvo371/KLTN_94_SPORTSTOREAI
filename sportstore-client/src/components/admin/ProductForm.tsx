@@ -3,6 +3,7 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Image from "next/image";
 import {
     Form,
     FormControl,
@@ -83,8 +84,8 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
             ten_san_pham: initialData.ten_san_pham,
             danh_muc_id: initialData.danh_muc_id.toString(),
             thuong_hieu_id: initialData.thuong_hieu_id?.toString() || undefined,
-            gia_goc: initialData.gia_goc,
-            gia_khuyen_mai: initialData.gia_khuyen_mai,
+            gia_goc: initialData.gia_goc ? parseFloat(initialData.gia_goc as any) : 0,
+            gia_khuyen_mai: initialData.gia_khuyen_mai ? parseFloat(initialData.gia_khuyen_mai as any) : null,
             mo_ta_ngan: initialData.mo_ta_ngan || "",
             mo_ta_day_du: initialData.mo_ta_day_du || "",
             trang_thai: !!initialData.trang_thai,
@@ -350,10 +351,12 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {imageFields.map((field, index) => (
                                 <div key={field.id} className="relative group aspect-square rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
-                                    <img
+                                    <Image
                                         src={field.duong_dan_anh}
                                         alt="Product"
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        unoptimized
+                                        className="object-cover"
                                     />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                         <Button

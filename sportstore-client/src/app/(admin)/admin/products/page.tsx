@@ -49,6 +49,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminProductsPage() {
     // Filter states
@@ -58,6 +68,7 @@ export default function AdminProductsPage() {
     const [brandId, setBrandId] = useState<string>("all");
     const [status, setStatus] = useState<string>("all");
     const [sortBy, setSortBy] = useState<string>("moi_nhat");
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const { categories, brands } = useAdminMetadata();
 
@@ -95,8 +106,13 @@ export default function AdminProductsPage() {
     };
 
     const handleDelete = (id: number) => {
-        if (window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
-            deleteMutation.mutate(id);
+        setDeleteId(id);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            deleteMutation.mutate(deleteId);
+            setDeleteId(null);
         }
     };
 
@@ -388,6 +404,31 @@ export default function AdminProductsPage() {
                     </>
                 )}
             </div>
+
+            <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+                <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-xl font-bold text-slate-900">Xác nhận xóa sản phẩm?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-slate-500">
+                            Hành động này không thể hoàn tác. Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống và không còn hiển thị trên cửa hàng.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2 sm:gap-0">
+                        <AlertDialogCancel className="rounded-xl border-slate-200 hover:bg-slate-50">Hủy bỏ</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200"
+                        >
+                            {deleteMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                                <Trash2 className="h-4 w-4 mr-2" />
+                            )}
+                            Xác nhận xóa
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

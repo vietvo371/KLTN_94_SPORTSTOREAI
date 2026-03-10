@@ -234,11 +234,25 @@ class SanPhamService
 
             $sanPham->update($data);
 
-            // Cập nhật biến thể
+            // Cập nhật biến thể (Sync logic)
             if ($bienThe !== null) {
-                $sanPham->bienThe()->delete();
+                $existingIds = $sanPham->bienThe()->pluck('id')->toArray();
+                $newIds = [];
+
                 foreach ($bienThe as $bt) {
-                    $sanPham->bienThe()->create($bt);
+                    if (isset($bt['id']) && in_array($bt['id'], $existingIds)) {
+                        $sanPham->bienThe()->where('id', $bt['id'])->update($bt);
+                        $newIds[] = $bt['id'];
+                    } else {
+                        $created = $sanPham->bienThe()->create($bt);
+                        $newIds[] = $created->id;
+                    }
+                }
+
+                // Xóa các biến thể không còn trong danh sách mới
+                $toDelete = array_diff($existingIds, $newIds);
+                if (!empty($toDelete)) {
+                    $sanPham->bienThe()->whereIn('id', $toDelete)->delete();
                 }
             }
 

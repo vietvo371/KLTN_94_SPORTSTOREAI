@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             MaGiamGiaSeeder::class,
             BannerSeeder::class,
             StandardRBACSeeder::class, // ← Phân quyền chuẩn
+            ChatbotSeeder::class,      // ← Chatbot data
             DonHangSeeder::class,
             DanhGiaSeeder::class, // DanhGia cần SanPham và NguoiDung
         ]);

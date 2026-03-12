@@ -22,6 +22,7 @@ export interface User {
     vai_tro: string; // Giữ lại cho backward compatibility
     anh_dai_dien: string | null;
     trang_thai: boolean;
+    is_master: boolean;
     xac_thuc_email_luc: string | null;
     cac_vai_tro?: Role[]; // Quan hệ vai trò thực tế
 }

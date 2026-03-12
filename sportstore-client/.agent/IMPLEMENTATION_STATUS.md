@@ -80,3 +80,7 @@
 - Triển khai UI Quản lý Vai trò (`RolesPage`) và Gán quyền chi tiết.
 - Cập nhật Sidebar Admin dựa trên quyền hạn thực tế.
 - Sửa lỗi Double-Unwrapping trong `rbac.service.ts` và thiết lập tiêu chuẩn API trong `.agent/`.
+### Session 7 — 03/2025 — Master UI Protection logic
+- Cập nhật User Interface hiển thị Badge Master (Crown icon) cho các tài khoản đặc biệt.
+- Vô hiệu hóa các nút xóa và chỉnh sửa cho tài khoản Master để đảm bảo an toàn hệ thống.
+- Cập nhật Typescript interfaces (`User`) để đồng bộ với backend.

@@ -72,9 +72,9 @@ Base URL: http://localhost:8000/api/v1
 
 Auth:
   POST /auth/register       → Đăng ký
-  POST /auth/login          → Đăng nhập → trả { token, user }
+  POST /auth/login          → Đăng nhập → trả { token, user: { ..., is_master } }
   POST /auth/logout         → Đăng xuất
-  GET  /auth/me             → Profile
+  GET  /auth/me             → Profile (có cờ `is_master`)
 
 Products:
   GET  /products            → Danh sách (filter, search, paginate)

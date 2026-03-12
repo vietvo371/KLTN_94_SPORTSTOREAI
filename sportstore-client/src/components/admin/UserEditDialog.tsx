@@ -34,6 +34,7 @@ import { Loader2, ShieldCheck, UserCog, Ban, CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Crown } from "lucide-react";
 
 const userSchema = z.object({
     vai_tro: z.string(),
@@ -102,6 +103,15 @@ export function UserEditDialog({ open, onOpenChange, user }: UserEditDialogProps
                                         <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{user?.email}</span>
                                     </div>
                                 </div>
+
+                                {user?.is_master && (
+                                    <div className="flex items-center gap-2 p-4 bg-rose-50 border border-rose-100 text-rose-800 rounded-2xl">
+                                        <Crown className="h-4 w-4 shrink-0" />
+                                        <p className="text-[10px] font-bold uppercase tracking-wider">
+                                            Đây là tài khoản Master của hệ thống. Bạn không thể thay đổi thông tin này.
+                                        </p>
+                                    </div>
+                                )}
 
                                 <FormField
                                     control={form.control}
@@ -195,7 +205,7 @@ export function UserEditDialog({ open, onOpenChange, user }: UserEditDialogProps
                                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                     Hủy
                                 </Button>
-                                <Button type="submit" disabled={updateUser.isPending}>
+                                <Button type="submit" disabled={updateUser.isPending || user?.is_master}>
                                     {updateUser.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                                     Lưu thay đổi
                                 </Button>

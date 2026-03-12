@@ -54,6 +54,7 @@ export interface User {
     anh_dai_dien: string | null
     vai_tro: 'quan_tri' | 'khach_hang'
     trang_thai: boolean
+    is_master: boolean
     created_at: string
     updated_at: string
 }

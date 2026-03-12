@@ -19,7 +19,8 @@ import {
     XCircle,
     AlertCircle,
     Mail,
-    Phone
+    Phone,
+    Crown
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useDeleteUser } from "@/hooks/useAdminUsers";
@@ -101,7 +102,11 @@ export function UserTable({ users, onEdit }: UserTableProps) {
                                     </div>
                                 </TableCell>
                                 <TableCell className="py-6 text-center">
-                                    {user.vai_tro === 'quan_tri' ? (
+                                    {user.is_master ? (
+                                        <Badge variant="secondary" className="bg-rose-100 text-rose-800 hover:bg-rose-100 flex items-center gap-1">
+                                            <Crown className="h-3 w-3" /> Master
+                                        </Badge>
+                                    ) : user.vai_tro === 'quan_tri' ? (
                                         <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
                                             Admin
                                         </Badge>
@@ -147,7 +152,8 @@ export function UserTable({ users, onEdit }: UserTableProps) {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-10 w-10 rounded-xl p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 shadow-sm transition-all active:scale-95"
+                                                        disabled={user.is_master}
+                                                        className="h-10 w-10 rounded-xl p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 shadow-sm transition-all active:scale-95 disabled:opacity-30"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>

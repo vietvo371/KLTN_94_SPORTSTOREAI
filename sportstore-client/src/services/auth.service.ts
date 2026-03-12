@@ -40,4 +40,15 @@ export const authService = {
         const response: any = await apiClient.put('/auth/me', data);
         return response.data;
     },
+
+    // Google OAuth
+    getGoogleRedirectUrl: async (): Promise<string> => {
+        const response: any = await apiClient.get('/auth/google/redirect');
+        return response.data.url;
+    },
+
+    loginWithGoogle: async (code: string): Promise<AuthResponse> => {
+        const response: any = await apiClient.post('/auth/google/callback', { code });
+        return response.data;
+    },
 };

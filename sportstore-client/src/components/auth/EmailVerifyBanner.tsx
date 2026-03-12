@@ -3,7 +3,7 @@
 import { useAuthStore } from '@/store/auth.store';
 import { authService } from '@/services/auth.service';
 import { Mail, Loader2, Send, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export function EmailVerifyBanner() {
@@ -31,7 +31,7 @@ export function EmailVerifyBanner() {
             await authService.resendVerificationEmail();
             setSent(true);
             toast.success('Đã gửi lại link xác thực. Vui lòng kiểm tra hộp thư của bạn!');
-            
+
             // Tự động tắt sau 30s để không làm phiền
             setTimeout(() => setSent(false), 30000);
         } catch (error: any) {
@@ -52,7 +52,7 @@ export function EmailVerifyBanner() {
                         Email của bạn chưa được xác thực. Hãy xác thực để bảo vệ tài khoản tốt hơn!
                     </p>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleResend}
@@ -66,8 +66,8 @@ export function EmailVerifyBanner() {
                         ) : null}
                         {sent ? 'Đã gửi' : 'Gửi lại link'}
                     </button>
-                    
-                    <button 
+
+                    <button
                         onClick={() => setDismissed(true)}
                         className="p-1 hover:bg-amber-100 rounded-lg transition-colors"
                         title="Tắt tạm thời"

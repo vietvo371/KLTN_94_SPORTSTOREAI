@@ -22,6 +22,11 @@ trait HasPermissions
      */
     public function hasPermission(string $permissionSlug): bool
     {
+        // Tài khoản Master (is_master = 1) có mọi quyền mà không cần check DB
+        if ($this->is_master) {
+            return true;
+        }
+
         // Cache permissions list for the current user during the request
         $permissions = Cache::remember("user_{$this->id}_permissions", 3600, function () {
             return $this->cacVaiTro()

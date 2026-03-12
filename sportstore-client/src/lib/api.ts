@@ -37,6 +37,7 @@ apiClient.interceptors.response.use(
       Cookies.remove('token');
       Cookies.remove('user');
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
         window.location.href = '/login';
       }
     }

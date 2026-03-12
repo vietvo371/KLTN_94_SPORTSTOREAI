@@ -92,8 +92,51 @@ class DonHangSeeder extends Seeder
                 'tam_tinh' => $totalTamTinh,
                 'tong_tien' => $totalTamTinh + 30000,
             ]);
+
+            // SINH LỊCH SỬ TRẠNG THÁI (LichSuTrangThaiDon)
+            $historyTimeline = [
+                'cho_xac_nhan' => 'Đơn hàng đã được đặt thành công.',
+                'da_xac_nhan' => 'Đơn hàng đã được hệ thống xác nhận.',
+                'dang_xu_ly' => 'Kho đang chuẩn bị hàng.',
+                'dang_giao' => 'Đơn hàng đang được vận chuyển đến bạn.',
+                'da_giao' => 'Giao hàng thành công. Cảm ơn bạn đã mua sắm!',
+                'da_huy' => 'Đơn hàng đã bị hủy.',
+                'hoan_tra' => 'Yêu cầu hoàn trả đã được xử lý.'
+            ];
+
+            $orderStatusOrder = ['cho_xac_nhan', 'da_xac_nhan', 'dang_xu_ly', 'dang_giao', 'da_giao'];
+            
+            if ($currentStatus === 'da_huy') {
+                // Lịch sử cho đơn hủy: Chờ xác nhận -> Đã hủy
+                $this->createHistory($order->id, 'cho_xac_nhan', $historyTimeline['cho_xac_nhan'], $createdAt);
+                $this->createHistory($order->id, 'da_huy', 'Khách hàng yêu cầu hủy đơn.', $createdAt->copy()->addMinutes(rand(10, 60)));
+            } else {
+                // Lịch sử cho các trạng thái khác: Đi theo trình tự cho đến trạng thái hiện tại
+                $stepTime = $createdAt->copy();
+                foreach ($orderStatusOrder as $status) {
+                    $this->createHistory($order->id, $status, $historyTimeline[$status], $stepTime);
+                    
+                    if ($status === $currentStatus) break;
+                    
+                    // Cộng thêm thời gian cho bước tiếp theo
+                    if ($status === 'cho_xac_nhan') $stepTime->addMinutes(rand(30, 120));
+                    elseif ($status === 'da_xac_nhan') $stepTime->addHours(rand(1, 3));
+                    elseif ($status === 'dang_xu_ly') $stepTime->addHours(rand(2, 6));
+                    elseif ($status === 'dang_giao') $stepTime->addDays(rand(1, 2));
+                }
+            }
         }
 
-        $this->command->info('✅ DonHangSeeder: Đã tạo 150 đơn hàng đa dạng trạng thái và thời gian.');
+        $this->command->info('✅ DonHangSeeder: Đã tạo 150 đơn hàng kèm Lịch sử trạng thái đầy đủ.');
+    }
+
+    private function createHistory($orderId, $status, $note, $time)
+    {
+        \App\Models\LichSuTrangThaiDon::create([
+            'don_hang_id' => $orderId,
+            'trang_thai' => $status,
+            'ghi_chu' => $note,
+            'created_at' => $time
+        ]);
     }
 }

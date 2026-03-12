@@ -103,7 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', \App\Http\Controllers\Api\Admin\NguoiDungAdminController::class);
 
         // Reports & Statistics
-        Route::prefix('reports')->group(function () {
+        Route::prefix('reports')->middleware('quyen:xem_doanh_thu')->group(function () {
             Route::get('/overview', [\App\Http\Controllers\Api\Admin\ReportAdminController::class, 'overview']);
             Route::get('/revenue-chart', [\App\Http\Controllers\Api\Admin\ReportAdminController::class, 'revenueChart']);
             Route::get('/top-products', [\App\Http\Controllers\Api\Admin\ReportAdminController::class, 'topProducts']);

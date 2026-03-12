@@ -7,12 +7,14 @@ use App\Models\GioHang;
 use App\Models\LichSuTrangThaiDon;
 use App\Models\MaGiamGia;
 use App\Models\NguoiDung;
-use App\Models\ThongBao;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 
 class DonHangService
 {
+    public function __construct(
+        private readonly NotificationService $notificationService
+    ) {}
     /**
      * Checkout — tạo đơn hàng từ giỏ hàng.
      */
@@ -93,14 +95,20 @@ class DonHangService
         // Xóa giỏ hàng
         $cart->items()->delete();
 
-        // Notification
-        ThongBao::create([
-            'nguoi_dung_id' => $user->id,
-            'loai'          => 'don_hang',
-            'tieu_de'       => 'Đặt hàng thành công',
-            'noi_dung'      => "Đơn hàng #{$donHang->ma_don_hang} đã được đặt thành công.",
-            'du_lieu_them'  => ['don_hang_id' => $donHang->id],
-        ]);
+        // Notification – lưu DB + gửi email
+        $this->notificationService->send(
+            user:         $user,
+            loai:         'don_hang',
+            tieuDe:       'Đặt hàng thành công 🛍️',
+            noiDung:      "Cảm ơn bạn đã đặt hàng!\nĐơn hàng #{$donHang->ma_don_hang} đã được tiếp nhận và đang chờ xác nhận.",
+            duLieuThem:   [
+                'Mã đơn hàng'  => $donHang->ma_don_hang,
+                'Tổng tiền'    => number_format($tongTien) . 'đ',
+                'Thanh toán'   => $data['phuong_thuc_tt'] === 'cod' ? 'Tiền mặt (COD)' : 'Chuyển khoản',
+            ],
+            hanhDongUrl:  config('app.frontend_url') . '/profile/orders/' . $donHang->ma_don_hang,
+            hanhDongText: 'Xem đơn hàng',
+        );
 
         return $donHang->load('items');
     }
@@ -130,7 +138,7 @@ class DonHangService
     /**
      * Admin: cập nhật trạng thái đơn hàng.
      */
-    public function updateStatus(DonHang $donHang, string $trangThai, string $ghiChu = '', NguoiDung $admin = null): DonHang
+    public function updateStatus(DonHang $donHang, string $trangThai, string $ghiChu = '', ?NguoiDung $admin = null): DonHang
     {
         $donHang->update(['trang_thai' => $trangThai]);
 
@@ -141,14 +149,31 @@ class DonHangService
             'cap_nhat_boi'=> $admin?->id,
         ]);
 
-        // Notify user
-        ThongBao::create([
-            'nguoi_dung_id' => $donHang->nguoi_dung_id,
-            'loai'          => 'trang_thai_don_hang',
-            'tieu_de'       => 'Đơn hàng cập nhật',
-            'noi_dung'      => "Đơn hàng #{$donHang->ma_don_hang} đã chuyển sang: {$trangThai}",
-            'du_lieu_them'  => ['don_hang_id' => $donHang->id],
-        ]);
+        // Notify user – lưu DB + gửi email
+        $trangThaiLabel = match($trangThai) {
+            'cho_xac_nhan'   => 'Chờ xác nhận',
+            'dang_xu_ly'     => 'Đang xử lý',
+            'dang_giao_hang' => 'Đang giao hàng',
+            'da_giao_hang'   => 'Đã giao hàng ✅',
+            'da_huy'         => 'Đã huỷ ❌',
+            default          => $trangThai,
+        };
+
+        $nguoiDung = $donHang->nguoiDung;
+        if ($nguoiDung) {
+            $this->notificationService->send(
+                user:         $nguoiDung,
+                loai:         'don_hang',
+                tieuDe:       "Đơn hàng đã cập nhật: {$trangThaiLabel}",
+                noiDung:      "Đơn hàng #{$donHang->ma_don_hang} của bạn hiện đang ở trạng thái: {$trangThaiLabel}.",
+                duLieuThem:   [
+                    'Mã đơn hàng'  => $donHang->ma_don_hang,
+                    'Trạng thái'   => $trangThaiLabel,
+                ],
+                hanhDongUrl:  config('app.frontend_url') . '/profile/orders/' . $donHang->ma_don_hang,
+                hanhDongText: 'Xem đơn hàng',
+            );
+        }
 
         return $donHang->fresh(['items', 'lichSuTrangThai']);
     }

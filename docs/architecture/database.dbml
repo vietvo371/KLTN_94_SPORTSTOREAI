@@ -14,6 +14,7 @@ Table nguoi_dung {
   mat_khau              varchar(255) [not null, note: 'Mật khẩu đã hash']
   so_dien_thoai         varchar(20)  [null, note: 'Số điện thoại']
   anh_dai_dien          varchar(255) [null, note: 'URL ảnh đại diện']
+  is_master             boolean      [not null, default: false, note: 'true = Tài khoản Master không thể xóa']
   vai_tro               enum('quan_tri','khach_hang') [not null, default: 'khach_hang', note: 'Phân quyền (đang chuyển sang hệ thống RBAC động)']
   trang_thai            boolean      [not null, default: true, note: 'true = đang hoạt động']
   xac_thuc_email_luc    timestamp    [null, note: 'Thời điểm xác thực email']

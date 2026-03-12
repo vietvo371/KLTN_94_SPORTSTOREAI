@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { addressService } from '@/services/address.service';
 import { AddressPayload } from '@/types/address.types';
+import Cookies from 'js-cookie';
 
 export const addressKeys = {
     all: ['addresses'] as const,
@@ -13,6 +14,7 @@ export const useAddress = () => {
     const { data: addresses, isLoading, error } = useQuery({
         queryKey: addressKeys.all,
         queryFn: addressService.getAddresses,
+        enabled: !!Cookies.get('token'),
     });
 
     const createMutation = useMutation({

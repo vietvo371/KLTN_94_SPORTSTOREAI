@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService } from "@/services/notification.service";
 import { toast } from "sonner";
+import Cookies from "js-cookie";
 
 export const notificationKeys = {
   all: ['notifications'] as const,
@@ -14,6 +15,7 @@ export const useNotifications = (params?: any) => {
   return useQuery({
     queryKey: notificationKeys.user(params),
     queryFn: () => notificationService.getNotifications(params),
+    enabled: !!Cookies.get('token'),
   });
 };
 

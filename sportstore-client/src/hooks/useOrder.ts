@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { orderService } from '@/services/order.service';
 import { OrderPayload } from '@/types/order.types';
+import Cookies from 'js-cookie';
 
 export const orderKeys = {
     all: ['orders'] as const,
@@ -24,6 +25,7 @@ export const useOrderHistory = (page = 1) => {
     return useQuery({
         queryKey: orderKeys.list(page),
         queryFn: () => orderService.getOrders(page),
+        enabled: !!Cookies.get('token'),
     });
 };
 
@@ -31,6 +33,6 @@ export const useOrderDetails = (code: string) => {
     return useQuery({
         queryKey: orderKeys.detail(code),
         queryFn: () => orderService.getOrderDetails(code),
-        enabled: !!code,
+        enabled: !!code && !!Cookies.get('token'),
     });
 };

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cartService } from '@/services/cart.service';
 import { useCartStore } from '@/store/cart.store';
 import { useEffect } from 'react';
+import Cookies from 'js-cookie';
 import { AddToCartPayload, UpdateCartItemPayload } from '@/types/cart.types';
 
 export const CART_QUERY_KEY = ['cart'];
@@ -14,6 +15,7 @@ export function useCart() {
     const { data: cart, isLoading, error } = useQuery({
         queryKey: CART_QUERY_KEY,
         queryFn: cartService.getCart,
+        enabled: !!Cookies.get('token'),
         retry: false, // Don't retry if user is unauthenticated
         staleTime: 1000 * 60 * 5, // 5 mins
     });

@@ -61,6 +61,7 @@
 | Cột | Ý nghĩa nghiệp vụ |
 |-----|-------------------|
 | `mat_khau` | Lưu dạng hash, không bao giờ lưu plain text |
+| `is_master` | `true` = Tài khoản Master (không thể xóa/khóa bừa bãi) |
 | `vai_tro` | `quan_tri` = toàn quyền, `khach_hang` = chỉ mua hàng |
 | `trang_thai` | `false` = tài khoản bị khóa, không thể đăng nhập |
 | `xac_thuc_email_luc` | `null` = chưa xác thực email |

@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             ChatbotSeeder::class,      // ← Chatbot data
             DonHangSeeder::class,
             DanhGiaSeeder::class, // DanhGia cần SanPham và NguoiDung
+            HanhViNguoiDungSeeder::class, // ← Lượt xem sản phẩm
         ]);
     }
 }

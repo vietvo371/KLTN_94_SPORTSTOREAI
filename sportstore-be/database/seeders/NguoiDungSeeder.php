@@ -34,7 +34,7 @@ class NguoiDungSeeder extends Seeder
         for ($i = 1; $i <= 30; $i++) {
             $fullName = $ho[array_rand($ho)] . ' ' . $dem[array_rand($dem)] . ' ' . $ten[array_rand($ten)];
             $email = Str::slug($fullName, '.') . $i . '@gmail.com';
-            $createdAt = now()->subDays(rand(1, 365));
+            $createdAt = now()->subDays(rand(1, 90));
 
             $userId = DB::table('nguoi_dung')->insertGetId([
                 'ho_va_ten'     => $fullName,

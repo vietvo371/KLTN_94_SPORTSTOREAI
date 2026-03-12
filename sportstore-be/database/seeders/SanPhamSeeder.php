@@ -58,6 +58,7 @@ class SanPhamSeeder extends Seeder
                 $moTaNgan = mb_substr($moTaNgan, 0, 490) . '...';
             }
 
+            $createdAt = now()->subDays(90);
             $sanPhamId = DB::table('san_pham')->insertGetId([
                 'ten_san_pham'   => $p['name'],
                 'duong_dan'      => $p['slug'] ?? Str::slug($p['name']),
@@ -68,11 +69,11 @@ class SanPhamSeeder extends Seeder
                 'mo_ta_day_du'   => $p['description'] ?? '',
                 'danh_muc_id'    => $catId,
                 'thuong_hieu_id' => $brandIds[array_rand($brandIds)],
-                'so_luong_ton_kho'=> 100,
+                'so_luong_ton_kho'=> 1000,
                 'noi_bat'        => $count < 12 ? true : false,
                 'trang_thai'     => true,
-                'created_at'     => $now,
-                'updated_at'     => $now,
+                'created_at'     => $createdAt,
+                'updated_at'     => $createdAt,
             ]);
 
             // Thêm biến thể
@@ -88,9 +89,9 @@ class SanPhamSeeder extends Seeder
                         'kich_co'     => $size,
                         'mau_sac'     => 'Mặc định',
                         'gia_rieng'   => 0,
-                        'ton_kho'     => rand(10, 50),
-                        'created_at'  => $now,
-                        'updated_at'  => $now,
+                        'ton_kho'     => rand(100, 200),
+                        'created_at'  => $createdAt,
+                        'updated_at'  => $createdAt,
                     ]);
                 }
             } elseif ($isAo) {
@@ -102,9 +103,9 @@ class SanPhamSeeder extends Seeder
                         'kich_co'     => $size,
                         'mau_sac'     => 'Mặc định',
                         'gia_rieng'   => ($size == 'XXL') ? 20000 : 0, 
-                        'ton_kho'     => rand(20, 100),
-                        'created_at'  => $now,
-                        'updated_at'  => $now,
+                        'ton_kho'     => rand(150, 300),
+                        'created_at'  => $createdAt,
+                        'updated_at'  => $createdAt,
                     ]);
                 }
             } else {
@@ -114,9 +115,9 @@ class SanPhamSeeder extends Seeder
                     'kich_co'     => 'Freesize',
                     'mau_sac'     => 'Mặc định',
                     'gia_rieng'   => 0,
-                    'ton_kho'     => 100,
-                    'created_at'  => $now,
-                    'updated_at'  => $now,
+                    'ton_kho'     => 500,
+                    'created_at'  => $createdAt,
+                    'updated_at'  => $createdAt,
                 ]);
             }
 

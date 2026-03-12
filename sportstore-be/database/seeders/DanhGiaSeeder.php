@@ -60,7 +60,7 @@ class DanhGiaSeeder extends Seeder
                 else $stars = 1;
 
                 $mock = $sampleReviews[$stars][array_rand($sampleReviews[$stars])];
-                $createdAt = now()->subDays(rand(1, 365));
+                $createdAt = now()->subDays(rand(1, 90));
 
                 DanhGia::create([
                     'san_pham_id' => $product->id,

@@ -14,13 +14,14 @@ class DonHangSeeder extends Seeder
     public function run(): void
     {
         $users = NguoiDung::where('vai_tro', 'khach_hang')->get();
-        $products = SanPham::all();
+        $products = SanPham::with('bienThe')->get();
+        $coupons = \App\Models\MaGiamGia::where('trang_thai', true)->get();
 
         if ($users->isEmpty() || $products->isEmpty()) {
             return;
         }
 
-        $this->command->info('Bắt đầu sinh 150 đơn hàng giả lập đa dạng...');
+        $this->command->info('Bắt đầu sinh 150 đơn hàng giả lập với logic Kho & Coupon (90 ngày)...');
 
         $statuses = [
             'cho_xac_nhan' => 5,
@@ -32,12 +33,12 @@ class DonHangSeeder extends Seeder
         ];
 
         $paymentMethods = ['cod', 'vnpay', 'momo'];
+        $usedCoupons = []; // Theo dõi: [userId => [couponId1, couponId2, ...]]
 
         for ($i = 0; $i < 150; $i++) {
             $user = $users->random();
-            $createdAt = now()->subDays(rand(0, 365))->subHours(rand(0, 23));
+            $createdAt = now()->subDays(rand(0, 90))->subHours(rand(0, 23));
             
-            // Chọn trạng thái theo trọng số
             $rand = rand(1, 100);
             $currentStatus = 'da_giao';
             $sum = 0;
@@ -68,32 +69,79 @@ class DonHangSeeder extends Seeder
                 'updated_at' => $createdAt,
             ]);
 
-            // Mỗi đơn hàng có 1-4 sản phẩm
             $numItems = rand(1, 4);
             $randomProducts = $products->random($numItems);
             $totalTamTinh = 0;
 
             foreach ($randomProducts as $product) {
                 $qty = rand(1, 3);
+                $variant = $product->bienThe->isNotEmpty() ? $product->bienThe->random() : null;
                 $price = $product->gia_khuyen_mai ?? $product->gia_goc;
+                $variantInfo = 'Mặc định';
+                $variantId = null;
+
+                if ($variant) {
+                    $variantId = $variant->id;
+                    $variantInfo = "{$variant->kich_co} / {$variant->mau_sac}";
+                    if ($variant->gia_rieng > 0) $price = $variant->gia_rieng;
+                }
                 
                 ChiTietDonHang::create([
                     'don_hang_id' => $order->id,
                     'san_pham_id' => $product->id,
+                    'bien_the_id' => $variantId,
                     'ten_san_pham' => $product->ten_san_pham,
+                    'thong_tin_bien_the' => $variantInfo,
                     'so_luong' => $qty, 
                     'don_gia' => $price,
                     'thanh_tien' => $price * $qty,
                 ]);
+
+                if ($currentStatus !== 'da_huy') {
+                    if ($variant) $variant->decrement('ton_kho', $qty);
+                    $product->decrement('so_luong_ton_kho', $qty);
+                    $product->increment('da_ban', $qty);
+                }
+
                 $totalTamTinh += $price * $qty;
             }
 
+            // LOGIC MÃ GIẢM GIÁ
+            $soTienGiam = 0;
+            $maGiamGiaId = null;
+            if (rand(1, 100) <= 30 && $coupons->isNotEmpty()) {
+                // Lọc bỏ những mã mà user này đã dùng
+                $userId = $user->id;
+                $userUsedIds = $usedCoupons[$userId] ?? [];
+                $availableCoupons = $coupons->reject(fn($c) => in_array($c->id, $userUsedIds));
+
+                if ($availableCoupons->isNotEmpty()) {
+                    $coupon = $availableCoupons->random();
+                    if ($totalTamTinh >= $coupon->gia_tri_don_hang_min) {
+                        $soTienGiam = $coupon->tinhSoTienGiam($totalTamTinh);
+                        $maGiamGiaId = $coupon->id;
+                        $coupon->increment('da_su_dung');
+                        
+                        \App\Models\LichSuDungMa::create([
+                            'ma_giam_gia_id' => $maGiamGiaId,
+                            'nguoi_dung_id' => $userId,
+                            'don_hang_id' => $order->id,
+                            'su_dung_luc' => $createdAt
+                        ]);
+                        
+                        // Đánh dấu user đã dùng mã này
+                        $usedCoupons[$userId][] = $maGiamGiaId;
+                    }
+                }
+            }
+
             $order->update([
+                'ma_giam_gia_id' => $maGiamGiaId,
                 'tam_tinh' => $totalTamTinh,
-                'tong_tien' => $totalTamTinh + 30000,
+                'so_tien_giam' => $soTienGiam,
+                'tong_tien' => max(0, $totalTamTinh - $soTienGiam + 30000),
             ]);
 
-            // SINH LỊCH SỬ TRẠNG THÁI (LichSuTrangThaiDon)
             $historyTimeline = [
                 'cho_xac_nhan' => 'Đơn hàng đã được đặt thành công.',
                 'da_xac_nhan' => 'Đơn hàng đã được hệ thống xác nhận.',
@@ -107,18 +155,13 @@ class DonHangSeeder extends Seeder
             $orderStatusOrder = ['cho_xac_nhan', 'da_xac_nhan', 'dang_xu_ly', 'dang_giao', 'da_giao'];
             
             if ($currentStatus === 'da_huy') {
-                // Lịch sử cho đơn hủy: Chờ xác nhận -> Đã hủy
                 $this->createHistory($order->id, 'cho_xac_nhan', $historyTimeline['cho_xac_nhan'], $createdAt);
-                $this->createHistory($order->id, 'da_huy', 'Khách hàng yêu cầu hủy đơn.', $createdAt->copy()->addMinutes(rand(10, 60)));
+                $this->createHistory($order->id, 'da_huy', 'Đơn hàng bị hủy theo yêu cầu.', $createdAt->copy()->addMinutes(rand(10, 60)));
             } else {
-                // Lịch sử cho các trạng thái khác: Đi theo trình tự cho đến trạng thái hiện tại
                 $stepTime = $createdAt->copy();
                 foreach ($orderStatusOrder as $status) {
                     $this->createHistory($order->id, $status, $historyTimeline[$status], $stepTime);
-                    
                     if ($status === $currentStatus) break;
-                    
-                    // Cộng thêm thời gian cho bước tiếp theo
                     if ($status === 'cho_xac_nhan') $stepTime->addMinutes(rand(30, 120));
                     elseif ($status === 'da_xac_nhan') $stepTime->addHours(rand(1, 3));
                     elseif ($status === 'dang_xu_ly') $stepTime->addHours(rand(2, 6));
@@ -127,7 +170,7 @@ class DonHangSeeder extends Seeder
             }
         }
 
-        $this->command->info('✅ DonHangSeeder: Đã tạo 150 đơn hàng kèm Lịch sử trạng thái đầy đủ.');
+        $this->command->info('✅ DonHangSeeder: 150 đơn hàng kèm logic Kho, Bán hàng và Coupon.');
     }
 
     private function createHistory($orderId, $status, $note, $time)

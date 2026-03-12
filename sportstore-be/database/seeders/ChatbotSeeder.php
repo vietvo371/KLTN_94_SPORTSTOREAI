@@ -24,8 +24,8 @@ class ChatbotSeeder extends Seeder
 
         for ($i = 0; $i < 60; $i++) {
             $user = $users->random();
-            // Random ngày trong 6 tháng qua
-            $createdAt = $now->copy()->subDays(rand(0, 180))->subHours(rand(0, 23))->subMinutes(rand(0, 59));
+            // Random ngày trong 90 ngày qua
+            $createdAt = $now->copy()->subDays(rand(0, 90))->subHours(rand(0, 23))->subMinutes(rand(0, 59));
             
             $session = PhienChatbot::create([
                 'nguoi_dung_id' => $user->id,

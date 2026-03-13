@@ -87,6 +87,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('notifications/{id}/read',[\App\Http\Controllers\Api\ThongBaoController::class, 'markRead']);
     Route::put('notifications/read-all', [\App\Http\Controllers\Api\ThongBaoController::class, 'markAllRead']);
 
+    // Thanh toán
+    Route::prefix('payments')->group(function () {
+        Route::post('create-url', [\App\Http\Controllers\Api\Payment\PaymentController::class, 'createPaymentUrl']);
+        Route::get('vnpay-return', [\App\Http\Controllers\Api\Payment\PaymentController::class, 'vnpayReturn']);
+        Route::post('momo-ipn', [\App\Http\Controllers\Api\Payment\PaymentController::class, 'momoIpn']);
+    });
+
     // ─── ADMIN ONLY ───────────────────────────────────────
     Route::prefix('admin')->middleware(\App\Http\Middleware\AdminMiddleware::class)->group(function () {
 

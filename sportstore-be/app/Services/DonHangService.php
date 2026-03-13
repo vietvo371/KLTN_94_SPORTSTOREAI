@@ -96,15 +96,26 @@ class DonHangService
         $cart->items()->delete();
 
         // Notification – lưu DB + gửi email
+        $isOnlinePayment = in_array($data['phuong_thuc_tt'], ['vnpay', 'momo']);
+        $tieuDe = $isOnlinePayment ? 'Đơn hàng đang chờ thanh toán ⏳' : 'Đặt hàng thành công 🛍️';
+        $noiDung = $isOnlinePayment 
+            ? "Đơn hàng #{$donHang->ma_don_hang} của bạn đã được khởi tạo. Vui lòng hoàn tất thanh toán để chúng tôi có thể xử lý đơn hàng sớm nhất."
+            : "Cảm ơn bạn đã đặt hàng!\nĐơn hàng #{$donHang->ma_don_hang} đã được tiếp nhận và đang chờ xác nhận.";
+
         $this->notificationService->send(
             user:         $user,
             loai:         'don_hang',
-            tieuDe:       'Đặt hàng thành công 🛍️',
-            noiDung:      "Cảm ơn bạn đã đặt hàng!\nĐơn hàng #{$donHang->ma_don_hang} đã được tiếp nhận và đang chờ xác nhận.",
+            tieuDe:       $tieuDe,
+            noiDung:      $noiDung,
             duLieuThem:   [
                 'Mã đơn hàng'  => $donHang->ma_don_hang,
                 'Tổng tiền'    => number_format($tongTien) . 'đ',
-                'Thanh toán'   => $data['phuong_thuc_tt'] === 'cod' ? 'Tiền mặt (COD)' : 'Chuyển khoản',
+                'Thanh toán'   => match($data['phuong_thuc_tt']) {
+                    'cod'    => 'Tiền mặt (COD)',
+                    'momo'   => 'Ví MoMo',
+                    'vnpay'  => 'VNPay',
+                    default  => 'Chuyển khoản',
+                },
             ],
             hanhDongUrl:  config('app.frontend_url') . '/profile/orders/' . $donHang->ma_don_hang,
             hanhDongText: 'Xem đơn hàng',

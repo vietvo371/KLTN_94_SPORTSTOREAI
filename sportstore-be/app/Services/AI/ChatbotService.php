@@ -121,12 +121,15 @@ class ChatbotService
     private function buildSystemPrompt(string $query): string
     {
         return <<<PROMPT
-Bạn là trợ lý tư vấn mua sắm đồ thể thao của SportStore.
-Nhiệm vụ của bạn là:
-- Tư vấn sản phẩm thể thao phù hợp với nhu cầu khách hàng
-- Trả lời bằng tiếng Việt, thân thiện và ngắn gọn
-- Không nói về các chủ đề không liên quan đến thể thao và mua sắm
-- Nếu khách hỏi về sản phẩm cụ thể, giới thiệu các sản phẩm liên quan từ catalog
+Bạn là trợ lý ảo chuyên nghiệp của **SportStore**. 
+Nhiệm vụ: Tư vấn sản phẩm thể thao THỰC TẾ đang có tại cửa hàng.
+
+**NGUYÊN TẮC QUAN TRỌNG:**
+1. **CHỈ TƯ VẤN SẢN PHẨM TRONG DANH SÁCH GỢI Ý (CONTEXT):** Tuyệt đối không tự bịa ra bất kỳ sản phẩm nào (ví dụ: Đồng hồ, thiết bị điện tử, v.v.) nếu chúng không xuất hiện trong phần "Sản phẩm gợi ý" bên dưới.
+2. **NẾU KHÔNG CÓ SẢN PHẨM PHÙ HỢP:** Hãy nói: *"Hiện tại em chưa thấy mẫu cụ thể đó trong kho, nhưng anh/chị tham khảo thử các mẫu [Tên SP trong list] này xem có ưng ý không nhé?"*.
+3. **PHẠM VI:** Chỉ hỗ trợ mua sắm, tư vấn đồ thể thao (giày, áo, vợt...). Với các chủ đề khác, hãy từ chối khéo léo và hỏi khách có muốn xem mẫu giày/vợt mới nhất không.
+4. **HỘI THOẠI TỰ NHIÊN:** Nếu khách hàng nói "có", "vâng", "ok" sau khi bạn gợi ý, hãy tiếp tục tư vấn sâu hơn về các sản phẩm đã liệt kê hoặc hỏi họ về size/màu sắc. Không được lặp lại câu chào máy móc.
+5. **ĐỊNH DẠNG:** Sử dụng Markdown. Tên sản phẩm phải **In đậm** và có link đi kèm.
 PROMPT;
     }
 
@@ -153,27 +156,48 @@ PROMPT;
 
     private function searchRelevantProducts(string $query): string
     {
-        // Tối ưu search: tìm theo tên, mô tả hoặc danh mục
-        $products = SanPham::where(function($q) use ($query) {
-                $q->where('ten_san_pham', 'like', "%{$query}%")
-                  ->orWhere('mo_ta_ngan', 'like', "%{$query}%")
-                  ->orWhereHas('danhMuc', function($dq) use ($query) {
-                      $dq->where('ten', 'like', "%{$query}%");
-                  });
-            })
-            ->where('trang_thai', true)
-            ->take(5) // Lấy tối đa 5 sản phẩm để context phong phú hơn
-            ->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
+        $query = mb_strtolower($query);
+        $confirmationKeywords = ['có', 'vâng', 'ừ', 'ok', 'được', 'yes', 'tư vấn', 'xem'];
+        
+        // Nếu user chỉ chat các từ khẳng định hoặc hỏi chung chung, lấy sản phẩm nổi bật
+        $isGeneralQuery = false;
+        if (strlen($query) < 5 || in_array($query, $confirmationKeywords)) {
+            $isGeneralQuery = true;
+        }
+
+        $queryBuilder = SanPham::where('trang_thai', true);
+
+        if ($isGeneralQuery) {
+            $products = $queryBuilder->where('noi_bat', true)->latest()->take(5)->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
+            // Nếu không có sp nổi bật, lấy ngẫu nhiên
+            if ($products->isEmpty()) {
+                $products = SanPham::where('trang_thai', true)->inRandomOrder()->take(5)->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
+            }
+        } else {
+            // Tối ưu search: tìm theo tên, mô tả hoặc danh mục
+            $products = $queryBuilder->where(function($q) use ($query) {
+                    $q->where('ten_san_pham', 'like', "%{$query}%")
+                      ->orWhere('mo_ta_ngan', 'like', "%{$query}%")
+                      ->orWhereHas('danhMuc', function($dq) use ($query) {
+                          $dq->where('ten', 'like', "%{$query}%");
+                      });
+                })
+                ->take(5)
+                ->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
+        }
 
         if ($products->isEmpty()) {
             return '';
         }
 
-        $list = $products->map(function ($p) {
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/');
+
+        $list = $products->map(function ($p) use ($frontendUrl) {
             $price = number_format($p->gia_khuyen_mai ?? $p->gia_goc, 0, ',', '.') . 'đ';
-            return "- [{$p->ten_san_pham}]({$p->duong_dan}): {$price}";
+            $fullUrl = "{$frontendUrl}/products/{$p->duong_dan}";
+            return "- **[{$p->ten_san_pham}]({$fullUrl})** \n  *Giá: {$price}*";
         })->join("\n");
 
-        return "Dưới đây là một số sản phẩm liên quan từ SportStore mà bạn có thể quan tâm:\n{$list}";
+        return "### 🎁 Sản phẩm gợi ý cho bạn:\n{$list}\n\n*Bạn có thể nhấn vào tên sản phẩm để xem chi tiết!*";
     }
 }

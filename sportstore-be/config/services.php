@@ -57,4 +57,20 @@ return [
         'redirect'      => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    // VNPay Sandbox
+    'vnpay' => [
+        'tmn_code'    => env('VNP_TMN_CODE'),
+        'hash_secret' => env('VNP_HASH_SECRET'),
+        'url'         => env('VNP_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
+        'return_url'  => env('VNP_RETURN_URL'),
+    ],
+
+    // MoMo Sandbox
+    'momo' => [
+        'partner_code' => env('MOMO_PARTNER_CODE'),
+        'access_key'   => env('MOMO_ACCESS_KEY'),
+        'secret_key'   => env('MOMO_SECRET_KEY'),
+        'endpoint'     => env('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
+    ],
+
 ];

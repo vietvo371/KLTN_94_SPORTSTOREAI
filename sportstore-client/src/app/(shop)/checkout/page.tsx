@@ -98,8 +98,8 @@ export default function CheckoutPage() {
                     }
                 } catch (error) {
                     toast.dismiss(loadingToast);
-                    toast.error('Không thể tạo liên kết thanh toán. Vui lòng thử lại trong Lịch sử đơn hàng.');
-                    router.push(`/checkout/success?order=${res.data.ma_don_hang}`);
+                    toast.error('Đơn hàng đã được tạo nhưng không thể khởi tạo thanh toán trực tuyến ngay bây giờ. Vui lòng thanh toán tại Lịch sử đơn hàng.');
+                    router.push('/profile/orders');
                     return;
                 }
             } else {

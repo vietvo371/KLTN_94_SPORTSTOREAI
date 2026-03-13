@@ -12,17 +12,20 @@ class NguoiDungSeeder extends Seeder
     public function run(): void
     {
         // 1. Tạo Super Admin (Master)
-        DB::table('nguoi_dung')->insert([
-            'ho_va_ten'     => 'Quản Trị Viên',
-            'email'         => 'admin@sportstore.vn',
-            'mat_khau'      => Hash::make('Admin@2025'),
-            'so_dien_thoai' => '0901234567',
-            'vai_tro'       => 'quan_tri',
-            'is_master'     => true,
-            'trang_thai'    => true,
-            'created_at'    => now()->subYear(),
-            'updated_at'    => now()->subYear(),
-        ]);
+        DB::table('nguoi_dung')->updateOrInsert(
+            ['email' => 'admin@sportstore.vn'],
+            [
+                'ho_va_ten'     => 'Quản Trị Viên',
+                'mat_khau'      => Hash::make('Admin@2025'),
+                'so_dien_thoai' => '0901234567',
+                'vai_tro'       => 'quan_tri',
+                'is_master'     => true,
+                'trang_thai'    => true,
+                'xac_thuc_email_luc' => now(),
+                'created_at'    => now()->subYear(),
+                'updated_at'    => now()->subYear(),
+            ]
+        );
 
         // 2. Tạo các nhân viên quản lý
         // vai_tro = 'quan_tri' để bộ lọc "Nhân viên" tại Admin hoạt động đúng
@@ -54,12 +57,16 @@ class NguoiDungSeeder extends Seeder
         ];
 
         foreach ($staffAccounts as $staff) {
-            DB::table('nguoi_dung')->insert(array_merge($staff, [
-                'vai_tro'    => 'quan_tri', // bắt buộc để filter admin hiển thị đúng
-                'trang_thai' => true,
-                'created_at' => now()->subDays(rand(30, 180)),
-                'updated_at' => now()->subDays(rand(1, 30)),
-            ]));
+            DB::table('nguoi_dung')->updateOrInsert(
+                ['email' => $staff['email']],
+                array_merge($staff, [
+                    'vai_tro'    => 'quan_tri', // bắt buộc để filter admin hiển thị đúng
+                    'trang_thai' => true,
+                    'xac_thuc_email_luc' => now(),
+                    'created_at' => now()->subDays(rand(30, 180)),
+                    'updated_at' => now()->subDays(rand(1, 30)),
+                ])
+            );
         }
 
         // 3. Tạo tập hợp Khách hàng (30 người)
@@ -81,6 +88,7 @@ class NguoiDungSeeder extends Seeder
                 'so_dien_thoai' => '09' . rand(10000000, 99999999),
                 'vai_tro'       => 'khach_hang',
                 'trang_thai'    => true,
+                'xac_thuc_email_luc' => now(),
                 'created_at'    => $createdAt,
                 'updated_at'    => $createdAt,
             ]);

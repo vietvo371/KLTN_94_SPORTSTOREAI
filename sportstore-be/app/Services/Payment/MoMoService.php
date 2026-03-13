@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class MoMoService
 {
@@ -13,10 +14,10 @@ class MoMoService
 
     public function __construct()
     {
-        $this->partnerCode = config('services.momo.partner_code');
-        $this->accessKey = config('services.momo.access_key');
-        $this->secretKey = config('services.momo.secret_key');
-        $this->endpoint = config('services.momo.endpoint');
+        $this->partnerCode = trim(config('services.momo.partner_code', ''));
+        $this->accessKey = trim(config('services.momo.access_key', ''));
+        $this->secretKey = trim(config('services.momo.secret_key', ''));
+        $this->endpoint = trim(config('services.momo.endpoint', 'https://test-payment.momo.vn/v2/gateway/api/create'));
     }
 
     /**
@@ -24,44 +25,52 @@ class MoMoService
      */
     public function createPaymentUrl(string $orderCode, float $amount, string $orderInfo = 'Thanh toan don hang'): array
     {
-        $amount = (int) $amount;
         $requestId = time() . "";
+        $momoOrderId = $orderCode . "_" . time(); 
         $redirectUrl = config('services.momo.return_url', env('FRONTEND_URL') . '/payment/momo-return');
         $ipnUrl = env('APP_URL') . '/api/v1/payments/momo-ipn';
         $extraData = "";
+        $orderInfo = "Thanh toan don hang " . $orderCode;
 
         $rawHash = "accessKey=" . $this->accessKey .
             "&amount=" . $amount .
             "&extraData=" . $extraData .
             "&ipnUrl=" . $ipnUrl .
-            "&orderId=" . $orderCode .
+            "&orderId=" . $momoOrderId .
             "&orderInfo=" . $orderInfo .
             "&partnerCode=" . $this->partnerCode .
             "&redirectUrl=" . $redirectUrl .
             "&requestId=" . $requestId .
             "&requestType=captureWallet";
 
+        Log::info("MoMo Final Raw Hash: " . $rawHash);
         $signature = hash_hmac("sha256", $rawHash, $this->secretKey);
 
         $data = [
             'partnerCode' => $this->partnerCode,
             'partnerName' => 'SportStore',
-            'storeId' => 'SportStore',
-            'requestId' => $requestId,
-            'amount' => $amount,
-            'orderId' => $orderCode,
-            'orderInfo' => $orderInfo,
+            'storeId'     => 'SportStore',
+            'requestId'   => $requestId,
+            'amount'      => $amount,
+            'orderId'     => $momoOrderId,
+            'orderInfo'   => $orderInfo,
             'redirectUrl' => $redirectUrl,
-            'ipnUrl' => $ipnUrl,
-            'lang' => 'vi',
-            'extraData' => $extraData,
+            'ipnUrl'      => $ipnUrl,
+            'lang'        => 'vi',
+            'extraData'   => $extraData,
             'requestType' => 'captureWallet',
-            'signature' => $signature
+            'signature'   => $signature
         ];
 
-        $response = Http::post($this->endpoint, $data);
+        Log::info("MoMo Final Data Post: " . json_encode($data));
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post($this->endpoint, $data);
 
-        return $response->json();
+        $result = $response->json();
+        Log::info("MoMo Response: " . json_encode($result));
+
+        return $result;
     }
 
     /**

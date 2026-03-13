@@ -48,12 +48,12 @@ class ChatbotController extends Controller
         $phien = $this->service->getHistory($maPhien);
 
         if (!$phien) {
-            return ApiResponse::success(['messages' => []], 'Chưa có lịch sử');
+            return ApiResponse::success(['tin_nhan' => []], 'Chưa có lịch sử');
         }
 
         return ApiResponse::success([
             'ma_phien' => $phien->ma_phien,
-            'messages' => $phien->tinNhan,
+            'tin_nhan' => $phien->tinNhan()->orderBy('created_at', 'asc')->get(),
         ], 'Lịch sử hội thoại');
     }
 }

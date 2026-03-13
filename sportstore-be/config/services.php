@@ -35,9 +35,14 @@ return [
         ],
     ],
 
-    // Gemini AI (Google)
     'gemini' => [
         'key' => env('GEMINI_API_KEY', ''),
+    ],
+
+    // Groq AI
+    'groq' => [
+        'key'   => env('GROQ_API_KEY', ''),
+        'model' => env('GROQ_MODEL', 'llama-3.1-70b-versatile'),
     ],
 
     // Python AI Recommendation Service

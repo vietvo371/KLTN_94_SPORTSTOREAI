@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useOrder } from '@/hooks/useOrder';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { CheckCircle2, XCircle, Loader2, ArrowRight, ShoppingBag } from 'lucide-
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
-export default function VNPayReturnPage() {
+function VNPayReturnContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { verifyVNPayReturn, isVerifying } = useOrder();
@@ -127,17 +127,19 @@ export default function VNPayReturnPage() {
                                         </Button>
                                     </Link>
                                 </div>
-
-                                {result.success && (
-                                    <p className="text-center text-xs text-muted-foreground pt-4 leading-relaxed">
-                                        Cảm ơn bạn đã tin tưởng SportStore. Chúng tôi sẽ sớm liên hệ để giao hàng cho bạn!
-                                    </p>
-                                )}
                             </CardContent>
                         </Card>
                     </motion.div>
                 )}
             </AnimatePresence>
         </div>
+    );
+}
+
+export default function VNPayReturnPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+            <VNPayReturnContent />
+        </Suspense>
     );
 }

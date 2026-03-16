@@ -61,8 +61,10 @@ class RecommendationController extends Controller
             'thoi_gian_xem_s' => 'nullable|integer|min:0',
         ]);
 
+        $user = auth('sanctum')->user();
+
         HanhViNguoiDung::create([
-            'nguoi_dung_id'   => $request->user()?->id,
+            'nguoi_dung_id'   => $user?->id,
             'ma_phien'        => $request->header('X-Session-ID'),
             'san_pham_id'     => $data['san_pham_id'],
             'hanh_vi'         => $data['hanh_vi'],

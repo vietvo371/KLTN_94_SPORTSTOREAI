@@ -121,15 +121,14 @@ class ChatbotService
     private function buildSystemPrompt(string $query): string
     {
         return <<<PROMPT
-Bạn là trợ lý ảo chuyên nghiệp của **SportStore**. 
-Nhiệm vụ: Tư vấn sản phẩm thể thao THỰC TẾ đang có tại cửa hàng.
+Bạn là trợ lý ảo chuyên nghiệp và trung thực của cửa hàng đồ thể thao **SportStore**. 
 
-**NGUYÊN TẮC QUAN TRỌNG:**
-1. **CHỈ TƯ VẤN SẢN PHẨM TRONG DANH SÁCH GỢI Ý (CONTEXT):** Tuyệt đối không tự bịa ra bất kỳ sản phẩm nào (ví dụ: Đồng hồ, thiết bị điện tử, v.v.) nếu chúng không xuất hiện trong phần "Sản phẩm gợi ý" bên dưới.
-2. **NẾU KHÔNG CÓ SẢN PHẨM PHÙ HỢP:** Hãy nói: *"Hiện tại em chưa thấy mẫu cụ thể đó trong kho, nhưng anh/chị tham khảo thử các mẫu [Tên SP trong list] này xem có ưng ý không nhé?"*.
-3. **PHẠM VI:** Chỉ hỗ trợ mua sắm, tư vấn đồ thể thao (giày, áo, vợt...). Với các chủ đề khác, hãy từ chối khéo léo và hỏi khách có muốn xem mẫu giày/vợt mới nhất không.
-4. **HỘI THOẠI TỰ NHIÊN:** Nếu khách hàng nói "có", "vâng", "ok" sau khi bạn gợi ý, hãy tiếp tục tư vấn sâu hơn về các sản phẩm đã liệt kê hoặc hỏi họ về size/màu sắc. Không được lặp lại câu chào máy móc.
-5. **ĐỊNH DẠNG:** Sử dụng Markdown. Tên sản phẩm phải **In đậm** và có link đi kèm.
+**QUY TẮC ỨNG XỬ:**
+1. **KHÔNG ĐƯỢC BỊA ĐẶT:** Chỉ được phép tư vấn các sản phẩm có tên chính xác trong danh sách "Sản phẩm thực tế tại kho" được cung cấp bên dưới. Tuyệt đối không tự nghĩ ra tên sản phẩm, thương hiệu hoặc tính năng không có trong danh sách.
+2. **XỬ LÝ KHI KHÔNG TÌM THẤY:** Nếu khách hỏi mẫu cụ thể mà không có trong danh sách, hãy trả lời: *"Hiện tại bên em chưa có mẫu [Tên mẫu khách hỏi] đó, nhưng anh/chị tham khảo qua các mẫu [Tên SP trong danh sách gợi ý] đang rất hot này nhé!"*.
+3. **TRUNG THỰC VỀ GIÁ:** Luôn trích dẫn đúng giá hiển thị trong danh sách.
+4. **HỘI THOẠI:** Trả lời ngắn gọn, thân thiện, tập trung vào việc giúp khách chọn được đồ thể thao ưng ý. Sử dụng Markdown để trình bày đẹp mắt.
+5. **LIÊN KẾT:** Luôn đính kèm Link sản phẩm (dạng Markdown) khi nhắc đến tên sản phẩm để khách bấm vào xem được ngay.
 PROMPT;
     }
 
@@ -157,37 +156,57 @@ PROMPT;
     private function searchRelevantProducts(string $query): string
     {
         $query = mb_strtolower($query);
-        $confirmationKeywords = ['có', 'vâng', 'ừ', 'ok', 'được', 'yes', 'tư vấn', 'xem'];
         
-        // Nếu user chỉ chat các từ khẳng định hoặc hỏi chung chung, lấy sản phẩm nổi bật
-        $isGeneralQuery = false;
-        if (strlen($query) < 5 || in_array($query, $confirmationKeywords)) {
-            $isGeneralQuery = true;
-        }
-
+        // 1. Lọc bỏ từ dừng (Stop words) để lấy từ khóa thực tế
+        $stopWords = [
+            'có', 'gì', 'không', 'bán', 'mẫu', 'nào', 'em', 'ơi', 'cho', 'anh', 'chị', 'tôi', 
+            'muốn', 'tìm', 'mua', 'đâu', 'giá', 'bao', 'nhiêu', 'thế', 'này', 'của', 'với', 'xem'
+        ];
+        
+        $rawWords = preg_split('/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY);
+        $keywords = array_filter($rawWords, fn($w) => !in_array($w, $stopWords) && mb_strlen($w) > 1);
+        
         $queryBuilder = SanPham::where('trang_thai', true);
 
-        if ($isGeneralQuery) {
-            $products = $queryBuilder->where('noi_bat', true)->latest()->take(5)->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
-            // Nếu không có sp nổi bật, lấy ngẫu nhiên
-            if ($products->isEmpty()) {
-                $products = SanPham::where('trang_thai', true)->inRandomOrder()->take(5)->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
-            }
-        } else {
-            // Tối ưu search: tìm theo tên, mô tả hoặc danh mục
-            $products = $queryBuilder->where(function($q) use ($query) {
-                    $q->where('ten_san_pham', 'like', "%{$query}%")
-                      ->orWhere('mo_ta_ngan', 'like', "%{$query}%")
-                      ->orWhereHas('danhMuc', function($dq) use ($query) {
-                          $dq->where('ten', 'like', "%{$query}%");
+        // 2. Tìm kiếm theo từ khóa (Keywords search)
+        if (!empty($keywords)) {
+            $queryBuilder->where(function($q) use ($keywords) {
+                foreach ($keywords as $word) {
+                    $q->orWhere('ten_san_pham', 'like', "%{$word}%")
+                      ->orWhere('mo_ta_ngan', 'like', "%{$word}%")
+                      ->orWhereHas('danhMuc', function($dq) use ($word) {
+                          $dq->where('ten', 'like', "%{$word}%");
                       });
-                })
+                }
+            });
+            $products = $queryBuilder->latest()->take(6)->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
+        } else {
+            $products = collect();
+        }
+
+        // 3. Fallback: Nếu không tìm thấy gì theo từ khóa, lấy sản phẩm Nổi bật / Mới nhất
+        if ($products->isEmpty()) {
+            $products = SanPham::where('trang_thai', true)
+                ->where('noi_bat', true)
+                ->latest()
                 ->take(5)
                 ->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
+            
+            // Nếu vẫn rỗng (trường hợp DB chưa có sp nổi bật), lấy ngẫu nhiên sp bất kỳ
+            if ($products->isEmpty()) {
+                $products = SanPham::where('trang_thai', true)
+                    ->inRandomOrder()
+                    ->take(5)
+                    ->get(['ten_san_pham', 'gia_goc', 'gia_khuyen_mai', 'duong_dan']);
+            }
+            
+            $contextHeader = "### 🌟 Các sản phẩm HOT tại cửa hàng (do không tìm thấy mẫu chính xác):\n";
+        } else {
+            $contextHeader = "### 🎁 Sản phẩm thực tế tại kho phù hợp với tìm kiếm của bạn:\n";
         }
 
         if ($products->isEmpty()) {
-            return '';
+            return "Hiện tại cửa hàng đang cập nhật sản phẩm, vui lòng quay lại sau.";
         }
 
         $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/');
@@ -195,9 +214,9 @@ PROMPT;
         $list = $products->map(function ($p) use ($frontendUrl) {
             $price = number_format($p->gia_khuyen_mai ?? $p->gia_goc, 0, ',', '.') . 'đ';
             $fullUrl = "{$frontendUrl}/products/{$p->duong_dan}";
-            return "- **[{$p->ten_san_pham}]({$fullUrl})** \n  *Giá: {$price}*";
+            return "- **[{$p->ten_san_pham}]({$fullUrl})** - Giá: {$price}";
         })->join("\n");
 
-        return "### 🎁 Sản phẩm gợi ý cho bạn:\n{$list}\n\n*Bạn có thể nhấn vào tên sản phẩm để xem chi tiết!*";
+        return $contextHeader . $list . "\n\n*Lưu ý: Bạn chỉ được tư vấn dựa trên danh sách sản phẩm này. Tuyệt đối không bịa tên sản phẩm.*";
     }
 }

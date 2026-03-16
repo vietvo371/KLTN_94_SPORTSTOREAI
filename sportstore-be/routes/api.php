@@ -39,6 +39,7 @@ Route::get('chatbot/history',   [\App\Http\Controllers\Api\Chatbot\ChatbotContro
 
 // Recommendations — public (sẽ trả kết quả generic nếu không có user)
 Route::get('recommendations',   [\App\Http\Controllers\Api\Recommendation\RecommendationController::class, 'index']);
+Route::post('behaviors',        [\App\Http\Controllers\Api\Recommendation\RecommendationController::class, 'recordBehavior']);
 
 // ─────────────────────────────────────────────────────────────
 // AUTHENTICATED ROUTES — cần Bearer token
@@ -54,9 +55,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Địa chỉ
     Route::apiResource('addresses', \App\Http\Controllers\Api\DiaChiController::class);
-
-    // Hành vi người dùng (ML tracking)
-    Route::post('behaviors', [\App\Http\Controllers\Api\Recommendation\RecommendationController::class, 'recordBehavior']);
 
     // Wishlist
     Route::get('wishlist',              [\App\Http\Controllers\Api\YeuThichController::class, 'index']);

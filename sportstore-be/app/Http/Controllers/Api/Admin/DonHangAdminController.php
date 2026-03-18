@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Helpers\ApiResponse;
 use App\Models\DonHang;
 use App\Services\DonHangService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,16 +22,53 @@ class DonHangAdminController extends Controller
     /**
      * Danh sách đơn hàng (Admin)
      *
-     * @queryParam trang_thai string Lọc đơn hàng theo trạng thái (cho_xac_nhan, da_giao...). Example: cho_xac_nhan
+     * @queryParam trang_thai string Lọc theo trạng thái (cho_xac_nhan, da_giao...). Example: cho_xac_nhan
+     * @queryParam phuong_thuc_tt string Lọc theo phương thức thanh toán (cod, vnpay, momo). Example: cod
+     * @queryParam tu_khoa string Tìm theo mã đơn hoặc tên khách hàng. Example: DH123
+     * @queryParam tu_ngay string Từ ngày (Y-m-d). Example: 2025-01-01
+     * @queryParam den_ngay string Đến ngày (Y-m-d). Example: 2025-12-31
      */
     public function index(Request $request): JsonResponse
     {
         if (!$request->user()->hasPermission('xem_don')) {
             return ApiResponse::error('Bạn không có quyền xem danh sách đơn hàng.', 403);
         }
-        $orders = DonHang::with('nguoiDung')
-            ->when($request->trang_thai, fn($q) => $q->where('trang_thai', $request->trang_thai))
-            ->latest()->paginate(20);
+
+        $query = DonHang::with('nguoiDung');
+
+        // Lọc theo trạng thái đơn
+        if ($request->filled('trang_thai')) {
+            $query->where('trang_thai', $request->trang_thai);
+        }
+
+        // Lọc theo phương thức thanh toán
+        if ($request->filled('phuong_thuc_tt')) {
+            $query->where('phuong_thuc_tt', $request->phuong_thuc_tt);
+        }
+
+        // Tìm kiếm theo mã đơn hoặc tên/SĐT người nhận
+        if ($request->filled('tu_khoa')) {
+            $kw = $request->tu_khoa;
+            $query->where(function ($q) use ($kw) {
+                $q->where('ma_don_hang', 'like', "%$kw%")
+                  ->orWhere('ten_nguoi_nhan', 'like', "%$kw%")
+                  ->orWhere('sdt_nguoi_nhan', 'like', "%$kw%");
+            });
+        }
+
+        // Lọc theo khoảng ngày (chuyển về UTC để khớp với DB)
+        if ($request->filled('tu_ngay')) {
+            $tuNgay = Carbon::createFromFormat('Y-m-d', $request->tu_ngay, 'Asia/Ho_Chi_Minh')
+                ->startOfDay()->utc();
+            $query->where('created_at', '>=', $tuNgay);
+        }
+        if ($request->filled('den_ngay')) {
+            $denNgay = Carbon::createFromFormat('Y-m-d', $request->den_ngay, 'Asia/Ho_Chi_Minh')
+                ->endOfDay()->utc();
+            $query->where('created_at', '<=', $denNgay);
+        }
+
+        $orders = $query->latest()->paginate(20);
         return ApiResponse::paginate($orders, '[Admin] Danh sách đơn hàng');
     }
 

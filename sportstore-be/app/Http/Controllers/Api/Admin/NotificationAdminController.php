@@ -9,6 +9,8 @@ use App\Models\ThongBao;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ThongBaoMail;
 
 /**
  * @group 6. Quản trị viên (Admin)
@@ -35,6 +37,7 @@ class NotificationAdminController extends Controller
             'noi_dung'     => 'required|string',
             'loai'         => 'required|string|in:khuyen_mai,he_thong',
             'du_lieu_them' => 'nullable|array',
+            'gui_email'    => 'nullable|boolean',
         ], [
             'tieu_de.required' => 'Vui lòng nhập tiêu đề thông báo.',
             'noi_dung.required' => 'Vui lòng nhập nội dung thông báo.',
@@ -72,6 +75,31 @@ class NotificationAdminController extends Controller
                     ThongBao::insert($chunk);
                 }
             });
+
+            if (!empty($validated['gui_email']) && $validated['gui_email']) {
+                $userEmails = NguoiDung::where('trang_thai', true)
+                    ->where('vai_tro', 'khach_hang')
+                    ->whereNotNull('email')
+                    ->where('email', '!=', '')
+                    ->pluck('email')
+                    ->toArray();
+
+                if (!empty($userEmails)) {
+                    $hanhDongUrl = null;
+                    if (isset($validated['du_lieu_them']['link'])) {
+                        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+                        $hanhDongUrl = rtrim($frontendUrl, '/') . '/' . ltrim($validated['du_lieu_them']['link'], '/');
+                    }
+                    
+                    Mail::bcc($userEmails)->queue(new ThongBaoMail(
+                        tieuDe: $validated['tieu_de'],
+                        noiDung: $validated['noi_dung'],
+                        loai: $validated['loai'],
+                        hanhDongUrl: $hanhDongUrl,
+                        hanhDongText: 'Xem chi tiết'
+                    ));
+                }
+            }
 
             return ApiResponse::success(null, 'Đã gửi thông báo quảng bá thành công tới ' . $userIds->count() . ' người dùng');
         } catch (\Exception $e) {

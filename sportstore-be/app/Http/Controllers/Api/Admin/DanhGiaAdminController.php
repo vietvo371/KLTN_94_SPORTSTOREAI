@@ -70,4 +70,41 @@ class DanhGiaAdminController extends Controller
         DanhGia::findOrFail($id)->delete();
         return ApiResponse::deleted('[Admin] Đã xóa đánh giá');
     }
+    /**
+     * Lấy cấu hình danh sách từ cấm
+     */
+    public function getBadWords(): JsonResponse
+    {
+        if (!auth()->user()->hasPermission('duyet_danh_gia')) {
+            return ApiResponse::error('Bạn không có quyền xem cấu hình đánh giá.', 403);
+        }
+
+        $defaultBadWords = ['đĩ', 'điếm', 'địt', 'lồn', 'cặc', 'phò', 'đéo', 'đm', 'vcl', 'đcm', 'vkl', 'vl', 'cc', 'ngu', 'chó', 'đỉ', 'cức'];
+        if (\Illuminate\Support\Facades\Storage::disk('local')->exists('bad_words.json')) {
+            $words = json_decode(\Illuminate\Support\Facades\Storage::disk('local')->get('bad_words.json'), true);
+            if (is_array($words)) {
+                return ApiResponse::success($words, 'Danh sách từ cấm');
+            }
+        }
+        return ApiResponse::success($defaultBadWords, 'Danh sách từ cấm mặc định');
+    }
+
+    /**
+     * Cập nhật danh sách từ cấm
+     */
+    public function updateBadWords(Request $request): JsonResponse
+    {
+        if (!auth()->user()->hasPermission('duyet_danh_gia')) {
+            return ApiResponse::error('Bạn không có quyền thay đổi cấu hình đánh giá.', 403);
+        }
+
+        $request->validate([
+            'bad_words' => 'required|array',
+            'bad_words.*' => 'string|max:50'
+        ]);
+
+        \Illuminate\Support\Facades\Storage::disk('local')->put('bad_words.json', json_encode($request->bad_words, JSON_UNESCAPED_UNICODE));
+        
+        return ApiResponse::success($request->bad_words, 'Cập nhật danh sách từ cấm thành công');
+    }
 }

@@ -64,6 +64,8 @@ class SanPhamAdminController extends Controller
             'bien_the'             => 'required|array|min:1',
             'bien_the.*.kich_co'    => 'required|string',
             'bien_the.*.mau_sac'     => 'nullable|string',
+            'bien_the.*.ma_mau_hex'  => 'nullable|string|max:7',
+            'bien_the.*.hinh_anh'    => 'nullable|string',
             'bien_the.*.gia_rieng'   => 'nullable|numeric|min:0',
             'bien_the.*.ton_kho'     => 'required|integer|min:0',
             // Hình ảnh
@@ -119,6 +121,8 @@ class SanPhamAdminController extends Controller
             'bien_the'             => 'sometimes|array|min:1',
             'bien_the.*.kich_co'    => 'required|string',
             'bien_the.*.mau_sac'     => 'nullable|string',
+            'bien_the.*.ma_mau_hex'  => 'nullable|string|max:7',
+            'bien_the.*.hinh_anh'    => 'nullable|string',
             'bien_the.*.gia_rieng'   => 'nullable|numeric|min:0',
             'bien_the.*.ton_kho'     => 'required|integer|min:0',
             // Hình ảnh

@@ -15,6 +15,32 @@ use Illuminate\Http\Request;
 class MaGiamGiaController extends Controller
 {
     /**
+     * Lấy danh sách mã giảm giá hợp lệ
+     *
+     * Trả về danh sách voucher có thể dùng.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $coupons = MaGiamGia::where('trang_thai', true)
+            ->where(function ($query) {
+                $query->whereNull('bat_dau_luc')
+                      ->orWhere('bat_dau_luc', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('het_han_luc')
+                      ->orWhere('het_han_luc', '>=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('gioi_han_su_dung')
+                      ->orWhereColumn('da_su_dung', '<', 'gioi_han_su_dung');
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return ApiResponse::success($coupons, 'Danh sách mã giảm giá khả dụng');
+    }
+
+    /**
      * Kiểm tra mã giảm giá
      *
      * Xác thực mã giảm giá do người dùng nhập trước khi áp dụng vào đơn hàng.

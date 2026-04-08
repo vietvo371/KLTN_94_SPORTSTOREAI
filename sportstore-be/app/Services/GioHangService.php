@@ -32,9 +32,9 @@ class GioHangService
         return GioHang::with([
             'items.sanPham.anhChinh',
             'items.bienThe',
-        ])->when($nguoiDungId, fn ($q) => $q->where('nguoi_dung_id', $nguoiDungId))
-          ->when(!$nguoiDungId, fn ($q) => $q->where('ma_phien', $maPhien))
-          ->first();
+        ])->when($nguoiDungId, fn($q) => $q->where('nguoi_dung_id', $nguoiDungId))
+            ->when(!$nguoiDungId, fn($q) => $q->where('ma_phien', $maPhien))
+            ->first();
     }
 
     /**
@@ -43,7 +43,7 @@ class GioHangService
     public function addItem(GioHang $cart, int $sanPhamId, ?int $bienTheId, int $soLuong): GioHangSanPham
     {
         $sp = SanPham::findOrFail($sanPhamId);
-        
+
         // Lấy giá hiện tại
         if ($bienTheId) {
             $bienThe = BienTheSanPham::findOrFail($bienTheId);
@@ -66,8 +66,8 @@ class GioHangService
         return $cart->items()->create([
             'san_pham_id' => $sanPhamId,
             'bien_the_id' => $bienTheId,
-            'so_luong'    => $soLuong,
-            'don_gia'     => $donGia,
+            'so_luong' => $soLuong,
+            'don_gia' => $donGia,
         ]);
     }
 

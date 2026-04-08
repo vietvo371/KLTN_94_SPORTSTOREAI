@@ -36,6 +36,22 @@ class DanhGiaController extends Controller
             'noi_dung'    => 'nullable|string|max:1000',
         ]);
 
+        $badWords = ['đĩ', 'điếm', 'địt', 'lồn', 'cặc', 'phò', 'đéo', 'đm', 'vcl', 'đcm', 'vkl', 'vl', 'cc', 'ngu', 'chó', 'đỉ', 'cức'];
+        if (\Illuminate\Support\Facades\Storage::disk('local')->exists('bad_words.json')) {
+            $words = json_decode(\Illuminate\Support\Facades\Storage::disk('local')->get('bad_words.json'), true);
+            if (is_array($words)) {
+                $badWords = $words;
+            }
+        }
+        
+        $contentToCheck = ($data['tieu_de'] ?? '') . ' ' . ($data['noi_dung'] ?? '');
+        
+        foreach ($badWords as $word) {
+            if (preg_match("/\b" . preg_quote($word, '/') . "\b/iu", $contentToCheck)) {
+                return ApiResponse::error('xin lỗi ngôn từ của bạn mang tính phản cảm vui lòng cmt lại', 400);
+            }
+        }
+
         $existing = DanhGia::where('san_pham_id', $data['san_pham_id'])
             ->where('nguoi_dung_id', $request->user()->id)
             ->exists();
@@ -44,8 +60,8 @@ class DanhGiaController extends Controller
             return ApiResponse::error('Bạn đã đánh giá sản phẩm này rồi', 422);
         }
 
-        $review = DanhGia::create([...$data, 'nguoi_dung_id' => $request->user()->id, 'da_duyet' => false]);
-        return ApiResponse::created($review, 'Đánh giá đã gửi, đang chờ duyệt');
+        $review = DanhGia::create([...$data, 'nguoi_dung_id' => $request->user()->id, 'da_duyet' => true]);
+        return ApiResponse::created($review, 'Đánh giá đã được gửi thành công');
     }
 
     /**

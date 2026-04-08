@@ -25,6 +25,7 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
     const { slug } = use(params);
     const router = useRouter();
     const [selectedVariant, setSelectedVariant] = useState<any>(null);
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(1);
     const [activeImage, setActiveImage] = useState<string>('/placeholder.png');
     const [isDescExpanded, setIsDescExpanded] = useState(false);
@@ -68,12 +69,52 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
         }
     }, [product]);
 
-    // Update image when variant is selected
+    // Initial variant selection
+    useEffect(() => {
+        if (product?.bien_the && product.bien_the.length > 0) {
+            const firstVariant = product.bien_the[0];
+            setSelectedColor(firstVariant.mau_sac);
+            setSelectedVariant(firstVariant);
+        }
+    }, [product]);
+
+    // Update image/variant when color or size changes
     useEffect(() => {
         if (selectedVariant?.hinh_anh) {
             setActiveImage(selectedVariant.hinh_anh);
         }
     }, [selectedVariant]);
+
+    // Handle color change: try to preserve size, otherwise pick first available size
+    const handleColorChange = (color: string) => {
+        setSelectedColor(color);
+        if (!product?.bien_the) return;
+        const sizesForColor = product.bien_the.filter((v: any) => v.mau_sac === color);
+
+        // Try to find if currently selected size exists in new color
+        const matchingSizeVariant = sizesForColor.find((v: any) => v.kich_co === selectedVariant?.kich_co);
+
+        if (matchingSizeVariant && matchingSizeVariant.ton_kho > 0) {
+            setSelectedVariant(matchingSizeVariant);
+        } else {
+            // Pick first available size for this color
+            const firstAvailable = sizesForColor.find((v: any) => v.ton_kho > 0) || sizesForColor[0];
+            setSelectedVariant(firstAvailable);
+        }
+    };
+
+    // New: Handle image click to select corresponding color if the image belongs to a variant
+    const handleImageClick = (imageUrl: string) => {
+        setActiveImage(imageUrl);
+
+        // Find if this image is associated with any variant
+        if (product?.bien_the) {
+            const variantWithImage = product.bien_the.find((v: any) => v.hinh_anh === imageUrl);
+            if (variantWithImage && variantWithImage.mau_sac && variantWithImage.mau_sac !== selectedColor) {
+                handleColorChange(variantWithImage.mau_sac);
+            }
+        }
+    };
 
     if (isLoading) {
         return (
@@ -89,17 +130,31 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
             </div>
         );
     }
-
     if (isError || !product) {
         return notFound();
     }
 
-    const imagesList = product.hinh_anh || product.hinh_anh_san_pham;
+    // Aggregate general product images and unique variant-specific images
+    const generalImages = (product.hinh_anh || product.hinh_anh_san_pham || []).map((img: any) => ({
+        id: `gen-${img.id || Math.random()}`,
+        url: img.url || img.duong_dan_anh || ''
+    }));
+
+    const variantImages = (product.bien_the || [])
+        .filter((v: any) => v.hinh_anh)
+        .map((v: any, idx: number) => ({
+            id: `var-${v.id || idx}`,
+            url: v.hinh_anh
+        }));
+
+    // Combine and remove duplicates (by URL)
+    const allImages = [...generalImages, ...variantImages];
+    const imagesList = Array.from(new Map(allImages.map(img => [img.url, img])).values());
 
     // Use variant price if selected, otherwise product price
     const currentPrice = selectedVariant?.gia_rieng || product.gia_khuyen_mai || product.gia_goc;
-    
-    const maxStock = selectedVariant ? selectedVariant.ton_kho : product.so_luong_ton_kho;
+
+    const maxStock = selectedVariant ? selectedVariant.ton_kho : (product.so_luong_ton_kho || 0);
     const isOutOfStock = maxStock <= 0;
 
     // Determine product type (loai) for size chart
@@ -111,6 +166,10 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
     };
 
     const productType = getProductType();
+
+    // Group variants by color
+    const uniqueColors = Array.from(new Set(product.bien_the?.map((v: any) => v.mau_sac) || []));
+    const filteredSizes = product.bien_the?.filter((v: any) => v.mau_sac === selectedColor) || [];
 
     const handleAddToCart = async () => {
         if (product.bien_the && product.bien_the.length > 0 && !selectedVariant) {
@@ -139,7 +198,7 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-6xl">
-            <button 
+            <button
                 onClick={() => router.back()}
                 className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 mb-6 w-fit transition-colors"
                 aria-label="Quay lại"
@@ -167,11 +226,11 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
                     {imagesList && imagesList.length > 1 && (
                         <div className="flex gap-4 overflow-x-auto pb-2">
                             {imagesList.map((img) => {
-                                const imgUrl = img.url || img.duong_dan_anh || '';
+                                const imgUrl = img.url || '';
                                 return (
                                     <div
                                         key={img.id}
-                                        onClick={() => setActiveImage(imgUrl)}
+                                        onClick={() => handleImageClick(imgUrl)}
                                         className={`relative w-20 h-20 rounded-lg overflow-hidden border shrink-0 cursor-pointer hover:ring-2 ring-primary transition-all ${activeImage === imgUrl ? 'ring-2 ring-primary border-primary' : 'border-slate-200'}`}
                                     >
                                         <Image src={imgUrl} alt="Thumbnail" fill unoptimized className="object-cover" />
@@ -185,21 +244,21 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
                 {/* Product Info */}
                 <div className="w-full md:w-1/2 flex flex-col">
                     {product.thuong_hieu && (
-                        <span className="text-sm text-primary font-semibold uppercase tracking-wider mb-2">
+                        <span className="text-[11px] md:text-sm text-primary font-bold uppercase tracking-[0.1em] mb-2 px-3 py-1 bg-primary/5 rounded-full w-fit">
                             {product.thuong_hieu.ten}
                         </span>
                     )}
 
-                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">
+                    <h1 className="text-2xl md:text-4xl font-black text-slate-900 mb-4 leading-[1.2] md:leading-tight">
                         {product.ten_san_pham}
                     </h1>
 
-                    <div className="flex items-end gap-4 mb-6 pb-6 border-b">
-                        <span className="text-3xl font-bold text-slate-900">
+                    <div className="flex items-baseline gap-3 mb-6 pb-6 border-b">
+                        <span className="text-2xl md:text-3xl font-black text-slate-900">
                             {formatCurrency(currentPrice)}
                         </span>
                         {product.gia_khuyen_mai && product.gia_khuyen_mai < product.gia_goc && (
-                            <span className="text-lg text-muted-foreground line-through mb-1">
+                            <span className="text-base md:text-lg text-muted-foreground line-through opacity-70">
                                 {formatCurrency(product.gia_goc)}
                             </span>
                         )}
@@ -209,8 +268,54 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
                         {product.mo_ta_ngan || 'Sản phẩm thể thao cao cấp chính hãng.'}
                     </p>
 
-                    {/* Variants Selector (Size) */}
-                    {product.bien_the && product.bien_the.length > 0 && (
+                    {/* Color Selection */}
+                    {(uniqueColors.length > 0) && (
+                        <div className="mb-8">
+                            <span className="block font-medium text-slate-900 mb-4">Chọn màu sắc:</span>
+                            <div className="flex flex-wrap gap-3">
+                                {uniqueColors.map((color: any) => {
+                                    const isSelected = selectedColor === color;
+                                    const variantWithColor = product.bien_the?.find((v: any) => v.mau_sac === color);
+                                    const hexColor = variantWithColor?.ma_mau_hex;
+
+                                    return (
+                                        <button
+                                            key={color}
+                                            onClick={() => handleColorChange(color)}
+                                            style={{
+                                                borderColor: isSelected && hexColor ? hexColor : undefined,
+                                                backgroundColor: isSelected && hexColor ? `${hexColor}10` : isSelected ? undefined : 'white',
+                                                boxShadow: isSelected && hexColor ? `0 0 0 1px ${hexColor}` : undefined
+                                            }}
+                                            className={`group relative flex items-center gap-2 px-4 py-2 rounded-xl border transition-all
+                                                ${isSelected
+                                                    ? (!hexColor ? 'border-primary bg-primary/5 ring-1 ring-primary' : '')
+                                                    : 'border-slate-200 hover:border-slate-400'}`}
+                                        >
+                                            {hexColor && (
+                                                <span
+                                                    className="w-4 h-4 rounded-full border border-slate-200 shadow-sm transition-transform group-hover:scale-110"
+                                                    style={{ backgroundColor: hexColor }}
+                                                />
+                                            )}
+                                            <span className={`text-sm font-bold transition-colors ${isSelected ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                                {color}
+                                            </span>
+                                            {isSelected && (
+                                                <span
+                                                    className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm"
+                                                    style={{ backgroundColor: hexColor || 'var(--primary)' }}
+                                                />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Size Selection */}
+                    {filteredSizes.length > 0 && (
                         <div className="mb-8">
                             <div className="flex justify-between items-center mb-4">
                                 <span className="font-medium text-slate-900">Chọn kích cỡ:</span>
@@ -225,27 +330,27 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
                                                 Gợi ý chính xác dựa trên thông số từ hệ thống SportStore.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        
+
                                         <div className="pb-4">
-                                            <SizeGuide 
-                                                loai={productType} 
-                                                thuong_hieu_id={product.thuong_hieu_id} 
+                                            <SizeGuide
+                                                loai={productType}
+                                                thuong_hieu_id={product.thuong_hieu_id}
                                             />
                                         </div>
                                     </DialogContent>
                                 </Dialog>
                             </div>
                             <div className="flex flex-wrap gap-3">
-                                {product.bien_the.map((variant: any) => {
+                                {filteredSizes.map((variant: any) => {
                                     const outOfStock = variant.ton_kho <= 0;
                                     const isSelected = selectedVariant?.id === variant.id;
-                                    
+
                                     return (
                                         <button
                                             key={variant.id}
                                             onClick={() => !outOfStock && setSelectedVariant(variant)}
                                             disabled={outOfStock}
-                                            className={`h-12 min-w-[3rem] px-4 rounded-lg border font-medium transition-all relative
+                                            className={`h-12 min-w-[3.5rem] px-4 rounded-lg border font-bold transition-all relative
                                                 ${isSelected
                                                     ? 'border-primary bg-primary text-primary-foreground shadow-md'
                                                     : outOfStock
@@ -268,107 +373,105 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
                     )}
 
                     {/* Add to Cart Actions */}
-                    <div className="flex gap-4 mt-auto">
-                        <div className={`flex items-center border rounded-lg h-14 ${isOutOfStock ? 'opacity-50 bg-slate-50' : ''}`}>
-                            <button
-                                onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                disabled={isOutOfStock || quantity <= 1}
-                                className="w-12 h-full flex items-center justify-center text-slate-500 hover:text-slate-900 focus:outline-none disabled:opacity-50 transition-colors"
+                    <div className="grid grid-cols-1 sm:flex sm:items-center gap-3 md:gap-4 mt-auto">
+                        <div className="flex gap-3 h-14">
+                            <div className={`flex items-center border border-slate-200 rounded-xl h-full bg-slate-50/50 ${isOutOfStock ? 'opacity-50 bg-slate-100' : ''}`}>
+                                <button
+                                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                                    disabled={isOutOfStock || quantity <= 1}
+                                    className="w-10 h-full flex items-center justify-center text-slate-500 hover:text-primary transition-colors disabled:opacity-30"
+                                >
+                                    -
+                                </button>
+                                <span className="w-10 text-center font-bold text-slate-800">{isOutOfStock ? 0 : quantity}</span>
+                                <button
+                                    onClick={() => {
+                                        if (quantity < maxStock) setQuantity(q => q + 1);
+                                        else toast.error(`Xin lỗi, chỉ còn ${maxStock} sản phẩm trong kho`);
+                                    }}
+                                    disabled={isOutOfStock || quantity >= maxStock}
+                                    className="w-10 h-full flex items-center justify-center text-slate-500 hover:text-primary transition-colors disabled:opacity-30"
+                                >
+                                    +
+                                </button>
+                            </div>
+
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                className="flex-1 h-full text-sm font-bold gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-600 transition-all rounded-xl shadow-sm"
+                                onClick={handleAddToCart}
+                                disabled={isAdding || isOutOfStock}
                             >
-                                -
-                            </button>
-                            <span className="w-12 text-center font-medium">{isOutOfStock ? 0 : quantity}</span>
-                            <button
-                                onClick={() => {
-                                    if (quantity < maxStock) setQuantity(q => q + 1);
-                                    else toast.error(`Xin lỗi, chỉ còn ${maxStock} sản phẩm trong kho`);
-                                }}
-                                disabled={isOutOfStock || quantity >= maxStock}
-                                className="w-12 h-full flex items-center justify-center text-slate-500 hover:text-slate-900 focus:outline-none disabled:opacity-50 transition-colors"
-                            >
-                                +
-                            </button>
+                                <ShoppingCart className="h-5 w-5" />
+                                <span className="hidden xs:inline">{isAdding ? 'Đang thêm...' : isOutOfStock ? 'Hết hàng' : 'Thêm Vào Giỏ'}</span>
+                                <span className="xs:hidden">{isOutOfStock ? 'Hết' : 'Thêm'}</span>
+                            </Button>
                         </div>
 
-                        <Button
-                            size="lg"
-                            variant="outline"
-                            className="flex-1 h-14 text-base font-semibold gap-2 border-red-500/40 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-600 transition-all rounded-xl"
-                            onClick={handleAddToCart}
-                            disabled={isAdding || isOutOfStock}
-                        >
-                            <ShoppingCart className="h-5 w-5" />
-                            {isAdding ? 'Đang thêm...' : isOutOfStock ? 'Hết hàng' : 'Thêm Vào Giỏ'}
-                        </Button>
+                        <div className="flex gap-3 h-14">
+                            <Button
+                                size="lg"
+                                className="flex-1 h-full text-sm sm:text-base font-black bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 active:scale-95 transition-all rounded-xl border-0"
+                                onClick={async () => {
+                                    if ((product.bien_the?.length ?? 0) > 0 && !selectedVariant) {
+                                        toast.error('Vui lòng chọn kích cỡ/phân loại sản phẩm.');
+                                        return;
+                                    }
+                                    if (isOutOfStock) {
+                                        toast.error('Sản phẩm hiện đang hết hàng.');
+                                        return;
+                                    }
+                                    const token = Cookies.get('token');
+                                    if (!token) {
+                                        toast.error('Vui lòng đăng nhập để đặt hàng.');
+                                        window.location.href = `/login?callbackUrl=${window.location.pathname}`;
+                                        return;
+                                    }
+                                    try {
+                                        await addToCart({
+                                            san_pham_id: product.id,
+                                            so_luong: quantity,
+                                            bien_the_id: selectedVariant?.id,
+                                        });
+                                        trackAction(product.id, 'mua_hang');
+                                        window.location.href = '/checkout';
+                                    } catch (error: any) {
+                                        toast.error(error.message || 'Lỗi xử lý đặt hàng');
+                                    }
+                                }}
+                                disabled={isAdding || isOutOfStock}
+                            >
+                                {isOutOfStock ? 'Hết hàng' : 'Đặt Hàng Ngay'}
+                            </Button>
 
-                        <Button
-                            size="lg"
-                            className="flex-1 h-14 text-base font-bold bg-red-600 text-white hover:bg-red-700 shadow-xl shadow-red-600/30 hover:-translate-y-0.5 active:translate-y-0 transition-all rounded-xl border-0"
-                            onClick={async () => {
-                                // 1. Check size/variant
-                                if ((product.bien_the?.length ?? 0) > 0 && !selectedVariant) {
-                                    toast.error('Vui lòng chọn kích cỡ/phân loại sản phẩm.');
-                                    return;
-                                }
-
-                                if (isOutOfStock) {
-                                    toast.error('Sản phẩm hiện đang hết hàng.');
-                                    return;
-                                }
-
-                                // 2. Check Auth
-                                const token = Cookies.get('token');
-                                if (!token) {
-                                    toast.error('Vui lòng đăng nhập để đặt hàng.');
-                                    window.location.href = `/login?callbackUrl=${window.location.pathname}`;
-                                    return;
-                                }
-
-                                // 3. Logic Mua ngay = Add to cart + Redirect
-                                try {
-                                    await addToCart({
-                                        san_pham_id: product.id,
-                                        so_luong: quantity,
-                                        bien_the_id: selectedVariant?.id,
-                                    });
-                                    trackAction(product.id, 'mua_hang');
-                                    
-                                    window.location.href = '/checkout';
-                                } catch (error: any) {
-                                    toast.error(error.message || 'Lỗi xử lý đặt hàng');
-                                }
-                            }}
-                            disabled={isAdding || isOutOfStock}
-                        >
-                            {isOutOfStock ? 'Hết hàng' : 'Đặt Hàng Ngay'}
-                        </Button>
-
-                        <Button
-                            size="icon"
-                            variant="outline"
-                            className={`h-14 w-14 border-slate-200 transition-all ${isWished ? 'text-rose-500 border-rose-200 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-slate-900 bg-white hover:bg-slate-50'}`}
-                            onClick={handleWishlist}
-                            disabled={isToggling}
-                            title={isWished ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
-                        >
-                            <Heart className="h-6 w-6" fill={isWished ? 'currentColor' : 'none'} />
-                        </Button>
+                            <Button
+                                size="icon"
+                                variant="outline"
+                                className={`h-14 w-14 shrink-0 rounded-xl border-slate-200 transition-all ${isWished ? 'text-rose-500 border-rose-200 bg-rose-50 shadow-inner' : 'text-slate-400 hover:text-slate-900 bg-white hover:bg-slate-50'}`}
+                                onClick={handleWishlist}
+                                disabled={isToggling}
+                                title={isWished ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                            >
+                                <Heart className="h-6 w-6" fill={isWished ? 'currentColor' : 'none'} />
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div className="mt-16 border-t pt-8">
                 <Tabs defaultValue="description" className="w-full">
-                    <TabsList variant="line" className="flex w-full justify-start items-center bg-transparent border-b rounded-none h-auto p-0 gap-8 mb-8 overflow-x-auto no-scrollbar">
+                    <TabsList variant="line" className="flex w-full justify-start items-center bg-transparent border-b rounded-none h-auto p-0 gap-4 md:gap-8 mb-8 overflow-x-auto no-scrollbar">
                         <TabsTrigger
                             value="description"
-                            className="text-lg py-4 px-1 font-bold text-slate-400 data-[state=active]:text-slate-900 data-[state=active]:bg-transparent transition-all hover:text-slate-600 relative after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[3px] after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-all after:rounded-t-full"
+                            className="text-base md:text-lg py-4 px-1 font-bold text-slate-400 data-[state=active]:text-slate-900 data-[state=active]:bg-transparent transition-all hover:text-slate-600 relative after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[3px] after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-all after:rounded-t-full"
                         >
                             Mô tả sản phẩm
                         </TabsTrigger>
                         <TabsTrigger
                             value="reviews"
-                            className="text-lg py-4 px-1 font-bold text-slate-400 data-[state=active]:text-slate-900 data-[state=active]:bg-transparent transition-all hover:text-slate-600 relative after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[3px] after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-all after:rounded-t-full"
+                            className="text-base md:text-lg py-4 px-1 font-bold text-slate-400 data-[state=active]:text-slate-900 data-[state=active]:bg-transparent transition-all hover:text-slate-600 relative after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[3px] after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-all after:rounded-t-full"
                         >
                             Đánh giá ({product.so_luot_danh_gia || 0})
                         </TabsTrigger>

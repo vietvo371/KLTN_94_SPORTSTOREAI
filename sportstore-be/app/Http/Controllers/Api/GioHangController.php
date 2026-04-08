@@ -17,13 +17,15 @@ use Illuminate\Http\Request;
  */
 class GioHangController extends Controller
 {
-    public function __construct(private GioHangService $service) {}
+    public function __construct(private GioHangService $service)
+    {
+    }
 
     private function getCartSession(Request $request): array
     {
         return [
             'nguoiDungId' => $request->user()?->id,
-            'maPhien'     => $request->header('X-Session-ID'),
+            'maPhien' => $request->header('X-Session-ID'),
         ];
     }
 
@@ -33,10 +35,10 @@ class GioHangController extends Controller
             return ['items' => [], 'tong_so_luong' => 0, 'tam_tinh' => 0];
         }
         return [
-            'id'           => $cart->id,
-            'items'        => $cart->items,
-            'tong_so_luong'=> $cart->tong_so_luong,
-            'tam_tinh'     => $cart->tam_tinh,
+            'id' => $cart->id,
+            'items' => $cart->items,
+            'tong_so_luong' => $cart->tong_so_luong,
+            'tam_tinh' => $cart->tam_tinh,
         ];
     }
 
@@ -67,11 +69,11 @@ class GioHangController extends Controller
         $data = $request->validate([
             'san_pham_id' => 'required|integer|exists:san_pham,id',
             'bien_the_id' => 'nullable|integer|exists:bien_the_san_pham,id',
-            'so_luong'    => 'required|integer|min:1|max:99',
+            'so_luong' => 'required|integer|min:1|max:99',
         ], [
             'san_pham_id.required' => 'Vui lòng chọn sản phẩm.',
-            'san_pham_id.exists'   => 'Sản phẩm không tồn tại.',
-            'so_luong.required'    => 'Vui lòng nhập số lượng.',
+            'san_pham_id.exists' => 'Sản phẩm không tồn tại.',
+            'so_luong.required' => 'Vui lòng nhập số lượng.',
         ]);
 
         ['nguoiDungId' => $uid, 'maPhien' => $sid] = $this->getCartSession($request);
@@ -147,13 +149,13 @@ class GioHangController extends Controller
     public function mergeGuestCart(Request $request): JsonResponse
     {
         $request->validate([
-            'items'                => 'required|array|min:1',
-            'items.*.san_pham_id'  => 'required|integer|exists:san_pham,id',
-            'items.*.bien_the_id'  => 'nullable|integer|exists:bien_the_san_pham,id',
-            'items.*.so_luong'     => 'required|integer|min:1|max:99',
+            'items' => 'required|array|min:1',
+            'items.*.san_pham_id' => 'required|integer|exists:san_pham,id',
+            'items.*.bien_the_id' => 'nullable|integer|exists:bien_the_san_pham,id',
+            'items.*.so_luong' => 'required|integer|min:1|max:99',
         ]);
 
-        $uid  = $request->user()->id;
+        $uid = $request->user()->id;
         $cart = $this->service->getOrCreate($uid, null);
 
         foreach ($request->items as $item) {

@@ -76,7 +76,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('cart',           [\App\Http\Controllers\Api\GioHangController::class, 'clear']);
     Route::post('cart/merge',       [\App\Http\Controllers\Api\GioHangController::class, 'mergeGuestCart']); // hợp nhất giỏ hàng guest
 
-    // Mã giảm giá — validate
+    // Mã giảm giá — public fetch, auth validate
+    Route::get('coupons', [\App\Http\Controllers\Api\MaGiamGiaController::class, 'index']);
     Route::post('coupons/validate', [\App\Http\Controllers\Api\MaGiamGiaController::class, 'validate']);
 
     // Đơn hàng
@@ -133,6 +134,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Reviews moderation
         Route::middleware('quyen:duyet_danh_gia')->group(function () {
+            Route::get('reviews/bad-words',    [\App\Http\Controllers\Api\Admin\DanhGiaAdminController::class, 'getBadWords']);
+            Route::put('reviews/bad-words',    [\App\Http\Controllers\Api\Admin\DanhGiaAdminController::class, 'updateBadWords']);
             Route::get('reviews',              [\App\Http\Controllers\Api\Admin\DanhGiaAdminController::class, 'index']);
             Route::put('reviews/{id}/approve', [\App\Http\Controllers\Api\Admin\DanhGiaAdminController::class, 'approve']);
             Route::delete('reviews/{id}',      [\App\Http\Controllers\Api\Admin\DanhGiaAdminController::class, 'destroy']);

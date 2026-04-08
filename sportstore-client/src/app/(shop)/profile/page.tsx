@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useAuthStore } from '@/store/auth.store';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, Save, KeyRound, Eye, EyeOff, ArrowLeft, Lock, ShieldCheck, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProfileForm {
     ho_va_ten: string;
@@ -30,6 +31,7 @@ export default function ProfilePage() {
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const pwdFieldId = useId();
 
     const {
         register,
@@ -66,6 +68,15 @@ export default function ProfilePage() {
     }, [updateUser, reset]);
 
     const onSubmit = async (data: ProfileForm) => {
+        // Kiểm tra có thay đổi gì không
+        const hoVaTenChanged = data.ho_va_ten.trim() !== (user?.ho_va_ten || '').trim();
+        const soDienThoaiChanged = (data.so_dien_thoai || '').trim() !== ((user?.so_dien_thoai) || '').trim();
+
+        if (!hoVaTenChanged && !soDienThoaiChanged) {
+            toast.error('Vui lòng thay đổi thông tin trước khi lưu.');
+            return;
+        }
+
         setIsLoading(true);
         try {
             const payload: Record<string, string> = {
@@ -267,21 +278,37 @@ export default function ProfilePage() {
                                 </Button>
                             </div>
 
-                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                                {/* Mật khẩu hiện tại */}
+                            <form
+                                onSubmit={handleSubmit(onSubmit)}
+                                className="space-y-4"
+                                autoComplete="off"
+                                method="post"
+                            >
+                                {/* Mật khẩu hiện tại — type=text + webkit masking để trình duyệt không mở kho mật khẩu */}
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="mat_khau_cu" className="text-sm font-semibold text-slate-700">
+                                    <Label htmlFor={`${pwdFieldId}-cu`} className="text-sm font-semibold text-slate-700">
                                         Mật khẩu hiện tại <span className="text-red-500">*</span>
                                     </Label>
                                     <div className="relative">
                                         <Input
-                                            id="mat_khau_cu"
-                                            type={showOldPassword ? 'text' : 'password'}
+                                            id={`${pwdFieldId}-cu`}
+                                            type="text"
+                                            inputMode="text"
                                             autoComplete="off"
+                                            spellCheck={false}
+                                            autoCapitalize="off"
+                                            data-lpignore="true"
+                                            data-1p-ignore="true"
+                                            data-form-type="other"
                                             {...register('mat_khau_cu', {
                                                 required: 'Vui lòng nhập mật khẩu hiện tại',
                                             })}
-                                            className="pr-12"
+                                            readOnly
+                                            onFocus={(e) => e.currentTarget.removeAttribute('readonly')}
+                                            className={cn(
+                                                'pr-12',
+                                                !showOldPassword && '[-webkit-text-security:disc] [text-security:disc]'
+                                            )}
                                             placeholder="Nhập mật khẩu hiện tại"
                                         />
                                         <button
@@ -299,19 +326,30 @@ export default function ProfilePage() {
 
                                 {/* Mật khẩu mới */}
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="mat_khau_moi" className="text-sm font-semibold text-slate-700">
+                                    <Label htmlFor={`${pwdFieldId}-moi`} className="text-sm font-semibold text-slate-700">
                                         Mật khẩu mới <span className="text-red-500">*</span>
                                     </Label>
                                     <div className="relative">
                                         <Input
-                                            id="mat_khau_moi"
-                                            type={showNewPassword ? 'text' : 'password'}
+                                            id={`${pwdFieldId}-moi`}
+                                            type="text"
+                                            inputMode="text"
                                             autoComplete="off"
+                                            spellCheck={false}
+                                            autoCapitalize="off"
+                                            data-lpignore="true"
+                                            data-1p-ignore="true"
+                                            data-form-type="other"
                                             {...register('mat_khau_moi', {
                                                 required: 'Vui lòng nhập mật khẩu mới',
                                                 minLength: { value: 8, message: 'Mật khẩu mới phải ít nhất 8 ký tự' },
                                             })}
-                                            className="pr-12"
+                                            readOnly
+                                            onFocus={(e) => e.currentTarget.removeAttribute('readonly')}
+                                            className={cn(
+                                                'pr-12',
+                                                !showNewPassword && '[-webkit-text-security:disc] [text-security:disc]'
+                                            )}
                                             placeholder="Nhập mật khẩu mới (ít nhất 8 ký tự)"
                                         />
                                         <button
@@ -329,18 +367,29 @@ export default function ProfilePage() {
 
                                 {/* Xác nhận mật khẩu mới */}
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="mat_khau_moi_confirmation" className="text-sm font-semibold text-slate-700">
+                                    <Label htmlFor={`${pwdFieldId}-xn`} className="text-sm font-semibold text-slate-700">
                                         Xác nhận mật khẩu mới <span className="text-red-500">*</span>
                                     </Label>
                                     <div className="relative">
                                         <Input
-                                            id="mat_khau_moi_confirmation"
-                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            id={`${pwdFieldId}-xn`}
+                                            type="text"
+                                            inputMode="text"
                                             autoComplete="off"
+                                            spellCheck={false}
+                                            autoCapitalize="off"
+                                            data-lpignore="true"
+                                            data-1p-ignore="true"
+                                            data-form-type="other"
                                             {...register('mat_khau_moi_confirmation', {
                                                 required: 'Vui lòng xác nhận mật khẩu mới',
                                             })}
-                                            className="pr-12"
+                                            readOnly
+                                            onFocus={(e) => e.currentTarget.removeAttribute('readonly')}
+                                            className={cn(
+                                                'pr-12',
+                                                !showConfirmPassword && '[-webkit-text-security:disc] [text-security:disc]'
+                                            )}
                                             placeholder="Nhập lại mật khẩu mới"
                                         />
                                         <button

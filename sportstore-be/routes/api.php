@@ -184,6 +184,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Notifications
         Route::middleware('quyen:gui_quang_ba')->group(function () {
             Route::post('notifications/broadcast', [\App\Http\Controllers\Api\Admin\NotificationAdminController::class, 'broadcast']);
+            Route::post('notifications/preview-target', [\App\Http\Controllers\Api\Admin\NotificationAdminController::class, 'previewTargetCount']);
             Route::get('notifications/history', [\App\Http\Controllers\Api\Admin\NotificationAdminController::class, 'history']);
         });
 

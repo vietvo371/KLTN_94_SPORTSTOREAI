@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Http\Helpers\ApiResponse;
+use App\Models\BienTheSanPham;
 use App\Models\DonHang;
 use App\Models\GioHang;
 use App\Models\LichSuTrangThaiDon;
 use App\Models\MaGiamGia;
 use App\Models\NguoiDung;
+use App\Models\SanPham;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
@@ -129,6 +131,139 @@ class DonHangService
             $cart->items()->delete();
 
             // 8. Notification
+            $isOnlinePayment = in_array($data['phuong_thuc_tt'], ['vnpay', 'momo']);
+            $tieuDe = $isOnlinePayment ? 'Đơn hàng đang chờ thanh toán ⏳' : 'Đặt hàng thành công 🛍️';
+            $noiDung = $isOnlinePayment
+                ? "Đơn hàng #{$donHang->ma_don_hang} của bạn đã được khởi tạo. Vui lòng hoàn tất thanh toán để chúng tôi có thể xử lý đơn hàng sớm nhất."
+                : "Cảm ơn bạn đã đặt hàng!\nĐơn hàng #{$donHang->ma_don_hang} đã được tiếp nhận và đang chờ xác nhận.";
+
+            $this->notificationService->send(
+                user: $user,
+                loai: 'don_hang',
+                tieuDe: $tieuDe,
+                noiDung: $noiDung,
+                duLieuThem: [
+                    'Mã đơn hàng' => $donHang->ma_don_hang,
+                    'Tổng tiền' => number_format($tongTien) . 'đ',
+                    'Thanh toán' => match ($data['phuong_thuc_tt']) {
+                        'cod' => 'Tiền mặt (COD)',
+                        'momo' => 'Ví MoMo',
+                        'vnpay' => 'VNPay',
+                        default => 'Chuyển khoản',
+                    },
+                ],
+                hanhDongUrl: config('app.frontend_url') . '/profile/orders/' . $donHang->ma_don_hang,
+                hanhDongText: 'Xem đơn hàng',
+            );
+
+            return $donHang->load('items');
+        });
+    }
+
+    /**
+     * Mua ngay — tạo đơn hàng trực tiếp từ sản phẩm, không qua giỏ hàng.
+     */
+    public function buyNow(NguoiDung $user, array $data): DonHang
+    {
+        return DB::transaction(function () use ($user, $data) {
+            $sanPham = SanPham::findOrFail($data['san_pham_id']);
+            $bienThe = !empty($data['bien_the_id'])
+                ? BienTheSanPham::findOrFail($data['bien_the_id'])
+                : null;
+            $soLuong = $data['so_luong'];
+
+            // 1. Kiểm tra tồn kho
+            if ($bienThe) {
+                if ($bienThe->ton_kho < $soLuong) {
+                    throw new HttpResponseException(ApiResponse::error(
+                        "Sản phẩm {$sanPham->ten_san_pham} ({$bienThe->kich_co} / {$bienThe->mau_sac}) không đủ số lượng trong kho.",
+                        400
+                    ));
+                }
+            } else {
+                if ($sanPham->so_luong_ton_kho < $soLuong) {
+                    throw new HttpResponseException(ApiResponse::error(
+                        "Sản phẩm {$sanPham->ten_san_pham} không đủ số lượng trong kho.",
+                        400
+                    ));
+                }
+            }
+
+            // 2. Tính giá (cùng logic với GioHangService)
+            if ($bienThe) {
+                $donGia = $bienThe->gia_rieng > 0
+                    ? $bienThe->gia_rieng
+                    : ($sanPham->gia_khuyen_mai > 0 ? $sanPham->gia_khuyen_mai : $sanPham->gia_goc);
+            } else {
+                $donGia = $sanPham->gia_khuyen_mai > 0 ? $sanPham->gia_khuyen_mai : $sanPham->gia_goc;
+            }
+
+            $tamTinh = $donGia * $soLuong;
+            $soTienGiam = 0;
+            $maGiamGiaId = null;
+
+            if (!empty($data['ma_coupon'])) {
+                $coupon = MaGiamGia::where('ma_code', $data['ma_coupon'])
+                    ->where('trang_thai', true)->first();
+                if ($coupon && $tamTinh >= $coupon->gia_tri_don_hang_min) {
+                    $soTienGiam = $coupon->tinhSoTienGiam($tamTinh);
+                    $maGiamGiaId = $coupon->id;
+                    $coupon->increment('da_su_dung');
+                }
+            }
+
+            $phiVanChuyen = 0;
+            $tongTien = $tamTinh - $soTienGiam + $phiVanChuyen;
+
+            // 3. Snapshot địa chỉ
+            $diaChi = $user->diaChi()->findOrFail($data['dia_chi_id']);
+            $diaChiGiaoHang = "{$diaChi->dia_chi_cu_the}, {$diaChi->phuong_xa}, {$diaChi->quan_huyen}, {$diaChi->tinh_thanh}";
+
+            // 4. Tạo đơn hàng
+            $donHang = DonHang::create([
+                'nguoi_dung_id' => $user->id,
+                'dia_chi_id' => $diaChi->id,
+                'ma_giam_gia_id' => $maGiamGiaId,
+                'ma_don_hang' => 'DH' . strtoupper(Str::random(8)),
+                'trang_thai' => 'cho_xac_nhan',
+                'phuong_thuc_tt' => $data['phuong_thuc_tt'],
+                'trang_thai_tt' => 'chua_thanh_toan',
+                'tam_tinh' => $tamTinh,
+                'so_tien_giam' => $soTienGiam,
+                'phi_van_chuyen' => $phiVanChuyen,
+                'tong_tien' => $tongTien,
+                'ghi_chu' => $data['ghi_chu'] ?? null,
+                'ten_nguoi_nhan' => $diaChi->ho_va_ten,
+                'sdt_nguoi_nhan' => $diaChi->so_dien_thoai,
+                'dia_chi_giao_hang' => $diaChiGiaoHang,
+            ]);
+
+            // 5. Tạo chi tiết & Trừ tồn kho
+            $bienTheInfo = $bienThe ? "{$bienThe->kich_co} / {$bienThe->mau_sac}" : null;
+
+            $donHang->items()->create([
+                'san_pham_id' => $sanPham->id,
+                'bien_the_id' => $bienThe?->id,
+                'ten_san_pham' => $sanPham->ten_san_pham,
+                'thong_tin_bien_the' => $bienTheInfo,
+                'so_luong' => $soLuong,
+                'don_gia' => $donGia,
+                'thanh_tien' => $donGia * $soLuong,
+            ]);
+
+            if ($bienThe) {
+                $bienThe->decrement('ton_kho', $soLuong);
+            }
+            $sanPham->decrement('so_luong_ton_kho', $soLuong);
+
+            // 6. Ghi lịch sử trạng thái
+            LichSuTrangThaiDon::create([
+                'don_hang_id' => $donHang->id,
+                'trang_thai' => 'cho_xac_nhan',
+                'ghi_chu' => 'Đơn hàng được tạo từ Mua ngay.',
+            ]);
+
+            // 7. Notification
             $isOnlinePayment = in_array($data['phuong_thuc_tt'], ['vnpay', 'momo']);
             $tieuDe = $isOnlinePayment ? 'Đơn hàng đang chờ thanh toán ⏳' : 'Đặt hàng thành công 🛍️';
             $noiDung = $isOnlinePayment

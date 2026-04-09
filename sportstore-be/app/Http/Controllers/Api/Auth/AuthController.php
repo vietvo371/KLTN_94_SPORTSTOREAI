@@ -7,6 +7,7 @@ use App\Http\Helpers\ApiResponse;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -139,5 +140,37 @@ class AuthController extends Controller
 
         $user = $this->authService->updateProfile($request->user(), $data);
         return ApiResponse::success($user, 'Cập nhật thông tin thành công');
+    }
+
+    /**
+     * Upload ảnh đại diện (chỉ user đã đăng nhập — lưu vào storage/app/public/avatars)
+     *
+     * @authenticated
+     */
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ], [
+            'image.required' => 'Vui lòng chọn ảnh.',
+            'image.image'    => 'File phải là ảnh hợp lệ.',
+            'image.max'      => 'Ảnh không được vượt quá 2MB.',
+        ]);
+
+        if (! $request->hasFile('image')) {
+            return ApiResponse::error('Không tìm thấy file upload', 400);
+        }
+
+        $file = $request->file('image');
+        $folder = 'avatars';
+        $filename = Str::random(20).'.'.$file->getClientOriginalExtension();
+        $file->storeAs($folder, $filename, 'public');
+        $url = asset('storage/'.$folder.'/'.$filename);
+
+        return ApiResponse::success([
+            'url' => $url,
+            'path' => 'public/'.$folder.'/'.$filename,
+            'filename' => $filename,
+        ], 'Upload ảnh thành công');
     }
 }

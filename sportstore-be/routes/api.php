@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [\App\Http\Controllers\Api\Auth\AuthController::class, 'logout']);
         Route::get('me',      [\App\Http\Controllers\Api\Auth\AuthController::class, 'me']);
         Route::put('me',      [\App\Http\Controllers\Api\Auth\AuthController::class, 'update']);
+        Route::post('me/avatar', [\App\Http\Controllers\Api\Auth\AuthController::class, 'uploadAvatar']);
     });
 
     // Địa chỉ
@@ -81,9 +82,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('coupons/validate', [\App\Http\Controllers\Api\MaGiamGiaController::class, 'validate']);
 
     // Đơn hàng
-    Route::get('orders',        [\App\Http\Controllers\Api\DonHangController::class, 'index']);
-    Route::post('orders',       [\App\Http\Controllers\Api\DonHangController::class, 'store']);
-    Route::get('orders/{code}', [\App\Http\Controllers\Api\DonHangController::class, 'show']);
+    Route::get('orders',          [\App\Http\Controllers\Api\DonHangController::class, 'index']);
+    Route::post('orders',         [\App\Http\Controllers\Api\DonHangController::class, 'store']);
+    Route::post('orders/buy-now', [\App\Http\Controllers\Api\DonHangController::class, 'buyNow']);
+    Route::get('orders/{code}',   [\App\Http\Controllers\Api\DonHangController::class, 'show']);
 
     // Đánh giá
     Route::post('reviews',     [\App\Http\Controllers\Api\DanhGiaController::class, 'store']);

@@ -60,6 +60,45 @@ class DonHangController extends Controller
     }
 
     /**
+     * Mua ngay (Buy Now)
+     *
+     * Tạo đơn hàng trực tiếp từ sản phẩm, không qua giỏ hàng.
+     *
+     * @authenticated
+     * @bodyParam san_pham_id int required ID sản phẩm. Example: 5
+     * @bodyParam bien_the_id int ID biến thể (nếu có). Example: 12
+     * @bodyParam so_luong int required Số lượng mua. Example: 1
+     * @bodyParam dia_chi_id int required ID địa chỉ giao hàng. Example: 2
+     * @bodyParam phuong_thuc_tt string required Phương thức thanh toán (cod, chuyen_khoan, vnpay, momo). Example: cod
+     * @bodyParam ma_coupon string Mã giảm giá (nếu có). Example: SALE2025
+     * @bodyParam ghi_chu string Ghi chú đơn hàng. Example: Giao giờ hành chính
+     */
+    public function buyNow(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'san_pham_id'    => 'required|integer|exists:san_pham,id',
+            'bien_the_id'    => 'nullable|integer|exists:bien_the_san_pham,id',
+            'so_luong'       => 'required|integer|min:1',
+            'dia_chi_id'     => 'required|integer|exists:dia_chi,id',
+            'phuong_thuc_tt' => 'required|in:cod,chuyen_khoan,vnpay,momo',
+            'ma_coupon'      => 'nullable|string|max:50',
+            'ghi_chu'        => 'nullable|string|max:500',
+        ], [
+            'san_pham_id.required'    => 'Vui lòng chọn sản phẩm.',
+            'san_pham_id.exists'      => 'Sản phẩm không tồn tại.',
+            'so_luong.required'       => 'Vui lòng nhập số lượng.',
+            'so_luong.min'            => 'Số lượng tối thiểu là 1.',
+            'dia_chi_id.required'     => 'Vui lòng chọn địa chỉ giao hàng.',
+            'dia_chi_id.exists'       => 'Địa chỉ không tồn tại.',
+            'phuong_thuc_tt.required' => 'Vui lòng chọn phương thức thanh toán.',
+            'phuong_thuc_tt.in'       => 'Phương thức thanh toán không hợp lệ.',
+        ]);
+
+        $donHang = $this->service->buyNow($request->user(), $data);
+        return ApiResponse::created($donHang, 'Đặt hàng thành công');
+    }
+
+    /**
      * Chi tiết đơn hàng
      *
      * Xem chi tiết một đơn hàng thông qua Mã đơn hàng.

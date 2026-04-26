@@ -24,10 +24,14 @@ class SanPhamController extends Controller
      * Phục vụ trang danh sách sản phẩm với các filter. Tự động trả về dữ liệu phân trang.
      * 
      * @queryParam tu_khoa string Tìm kiếm theo tên sản phẩm. Example: áo
-     * @queryParam danh_muc_id int Lọc theo ID danh mục. Example: 3
-     * @queryParam thuong_hieu_id int Lọc theo ID thương hiệu. Example: null
+     * @queryParam danh_muc string Slug danh mục. Example: bong-da
+     * @queryParam thuong_hieu string Slug thương hiệu. Example: nike
      * @queryParam sap_xep string Tiêu chí sắp xếp: `moi_nhat`, `ban_chay`, `gia_tang`, `gia_giam`. Example: moi_nhat
-     * @queryParam gioi_han int Số lượng sản phẩm trên mỗi trang (Mặc định: 12). Example: 12
+     * @queryParam gia_min int Giá tối thiểu. Example: 100000
+     * @queryParam gia_max int Giá tối đa. Example: 2000000
+     * @queryParam chi_giam_gia int Chỉ hiện sản phẩm giảm giá (1=bật). Example: 1
+     * @queryParam co_hang int Chỉ hiện sản phẩm còn hàng (1=bật). Example: 1
+     * @queryParam per_page int Số lượng sản phẩm mỗi trang (Mặc định: 12). Example: 12
      */
     public function index(Request $request): JsonResponse
     {

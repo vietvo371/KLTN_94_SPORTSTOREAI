@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\SanPham;
 use App\Models\HanhViNguoiDung;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class SanPhamService
 {
@@ -71,6 +72,18 @@ class SanPhamService
         // Chỉ nổi bật
         if (!empty($filters['noi_bat'])) {
             $query->where('noi_bat', true);
+        }
+
+        // Chỉ sản phẩm giảm giá
+        if (!empty($filters['chi_giam_gia'])) {
+            $query->whereNotNull('gia_khuyen_mai')
+                   ->where('gia_khuyen_mai', '>', 0)
+                   ->whereColumn('gia_khuyen_mai', '<', 'gia_goc');
+        }
+
+        // Chỉ sản phẩm còn hàng
+        if (!empty($filters['co_hang'])) {
+            $query->where('so_luong_ton_kho', '>', 0);
         }
 
         // Sắp xếp

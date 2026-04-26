@@ -65,24 +65,98 @@ class SanPhamSeeder extends Seeder
                     $brandId = array_values($brandMap)[0] ?? 1; // Fallback
                 }
 
-                // 2. Xác định Category ID (Mapping bằng Slug của Danh mục Cha + Con)
+                // 2. Xác định Category ID
+                // Ưu tiên keyword trong tên sản phẩm, fallback vào categories JSON rồi map slug
                 $catId = null;
-                if (isset($p['categories']) && count($p['categories']) >= 3) {
+                $nameStr = strtolower($tenSanPham . ' ' . ($p['slug'] ?? '') . ' ' . $brandName);
+
+                // ── Xác định parent nhánh theo brand ──
+                $isNike   = (bool) preg_match('/\b(nike|jordan)\b/i', $nameStr);
+                $isWika   = (bool) preg_match('/\b(wika)\b/i', $nameStr);
+                $isKaiwin = (bool) preg_match('/\b(kaiwin)\b/i', $nameStr);
+                $isKamito = (bool) preg_match('/\b(kamito)\b/i', $nameStr);
+
+                // ── Mapping theo keyword trong tên sp (độ chính xác cao hơn categories JSON) ──
+                if (preg_match('/\b(giay|giầy|shoe|air max|vaporfly|vomero|zoom fly|pegasus|wincflo|winflo|free metcon|dunk|air force)\b/i', $nameStr)) {
+                    if ($isNike) {
+                        if (preg_match('/\b(vaporfly|vomero|zoom fly|pegasus|wincflo|winflo|free metcon)\b/i', $nameStr)) {
+                            $catId = $cats['chay-bo-giay-chay-bo']->id ?? null;
+                        } else {
+                            $catId = $cats['thoi-trang-giay-the-thao']->id ?? null;
+                        }
+                    } elseif ($isKamito) {
+                        if (preg_match('/\b(giay bong da|giày bóng đá|soccer|artista|velocidad)\b/i', $nameStr)) {
+                            $catId = $cats['bong-da-giay-bong-da']->id ?? null;
+                        } elseif (preg_match('/\b(pickleball)\b/i', $nameStr)) {
+                            $catId = $cats['pickleball-giay-pickleball']->id ?? null;
+                        } else {
+                            $catId = $cats['thoi-trang-giay-the-thao']->id ?? null;
+                        }
+                    } elseif ($isKaiwin) {
+                        if (preg_match('/\b(ao bong da|áo bóng đá)\b/i', $nameStr)) {
+                            $catId = $cats['bong-da-ao-bong-da']->id ?? null;
+                        } elseif (preg_match('/\b(giay bong da|giày bóng đá)\b/i', $nameStr)) {
+                            $catId = $cats['bong-da-giay-bong-da']->id ?? null;
+                        } elseif (preg_match('/\b(pickleball)\b/i', $nameStr)) {
+                            $catId = $cats['pickleball-giay-pickleball']->id ?? null;
+                        } else {
+                            $catId = $cats['pickleball-giay-pickleball']->id ?? null;
+                        }
+                    } else {
+                        $catId = $cats['pickleball-giay-pickleball']->id ?? null;
+                    }
+                } elseif (preg_match('/\b(ao polo)\b/i', $nameStr)) {
+                    if ($isNike || $isKamito) {
+                        $catId = $cats['thoi-trang-ao-polo']->id ?? null;
+                    } else {
+                        $catId = $cats['bong-da-ao-polo']->id ?? null;
+                    }
+                } elseif (preg_match('/\b(ao bong da|áo bóng đá)\b/i', $nameStr)) {
+                    $catId = $cats['bong-da-ao-bong-da']->id ?? null;
+                } elseif (preg_match('/\b(quan ao bong da|bộ bóng đá|bo bong da)\b/i', $nameStr)) {
+                    $catId = $cats['bong-da-quan-ao-bong-da']->id ?? null;
+                } elseif (preg_match('/\b(vot|vợt).*\b(pickleball)\b/i', $nameStr)) {
+                    $catId = $cats['pickleball-vot-pickleball']->id ?? null;
+                } elseif (preg_match('/\b(quan pickleball|short pickleball)\b/i', $nameStr)) {
+                    $catId = $cats['pickleball-quan-pickleball']->id ?? null;
+                } elseif (preg_match('/\b(balo|balo.*pickleball|tui dui|túi)\b/i', $nameStr)) {
+                    if (preg_match('/\b(pickleball)\b/i', $nameStr)) {
+                        $catId = $cats['pickleball-balo-pickleball']->id ?? null;
+                    } else {
+                        $catId = $cats['bong-da-balo-tui-the-thao']->id ?? null;
+                    }
+                } elseif (preg_match('/\b(bong pickleball|ball pickle)\b/i', $nameStr)) {
+                    $catId = $cats['pickleball-bong-pickleball']->id ?? null;
+                } elseif (preg_match('/\b(ao the thao|áo thể thao|áo thun|áo t-shirt)\b/i', $nameStr)) {
+                    if (preg_match('/\b(pickleball)\b/i', $nameStr)) {
+                        $catId = $cats['pickleball-ao-thun-the-thao']->id ?? null;
+                    } else {
+                        $catId = $cats['the-thao-ao-the-thao']->id ?? null;
+                    }
+                } elseif (preg_match('/\b(ga tay thu mon|găng tay thủ môn)\b/i', $nameStr)) {
+                    $catId = $cats['bong-da-phu-kien-bong-da']->id ?? null;
+                } elseif (preg_match('/\b(bong da|bóng đá)\b/i', $nameStr) && preg_match('/\b(qua|quả)\b/i', $nameStr)) {
+                    $catId = $cats['bong-da-qua-bong-da']->id ?? null;
+                }
+
+                // ── Fallback: dùng categories JSON ──
+                if (!$catId && isset($p['categories']) && count($p['categories']) >= 3) {
                     $parentName = trim($p['categories'][1]);
-                    $childName = trim($p['categories'][2]);
-                    $slug = Str::slug($parentName . ' ' . $childName);
-                    
+                    $childName  = trim($p['categories'][2]);
+                    $slug       = Str::slug($parentName . ' ' . $childName);
                     if (isset($cats[$slug])) {
                         $catId = $cats[$slug]->id;
                     } else {
-                        // Fallback tìm parent
                         $parentSlug = Str::slug($parentName);
                         if (isset($cats[$parentSlug])) {
                             $catId = $cats[$parentSlug]->id;
                         }
                     }
                 }
-                if (!$catId) $catId = array_values($cats)[0]->id ?? null;
+
+                if (!$catId) {
+                    $catId = $cats['thoi-trang-giay-the-thao']->id ?? array_values($cats)[0]->id ?? null;
+                }
 
                 // 3. Chuẩn hóa giá
                 $giaKhuyenMai = !empty($p['price']) ? (float) $p['price'] : 0;
@@ -120,9 +194,8 @@ class SanPhamSeeder extends Seeder
                     ]);
 
                     // 4. Các biến thể (Size/Đồng giá)
-                    $nameStr = strtolower($tenSanPham . ' ' . ($p['slug'] ?? ''));
-                    $isGiay = Str::contains($nameStr, ['giay', 'giày', 'shoe']);
-                    $isAo = Str::contains($nameStr, ['ao', 'áo', 'shirt', 'bo thi dau', 'bộ']);
+                    $isGiay = preg_match('/\b(giay|giầy|shoe)\b/i', $nameStr);
+                    $isAo = preg_match('/\b(ao|áo|shirt|bo thi dau|bộ)\b/i', $nameStr);
 
                     if ($isGiay) {
                         $sizes = ['39', '40', '41', '42', '43'];

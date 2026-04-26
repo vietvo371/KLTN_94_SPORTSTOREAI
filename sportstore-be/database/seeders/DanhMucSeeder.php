@@ -76,7 +76,7 @@ class DanhMucSeeder extends Seeder
                 foreach ($children[$pName] as $cName => $__) {
                     DB::table('danh_muc')->insert([
                         'ten'             => $cName,
-                        'duong_dan'       => Str::slug($pName . ' ' . $cName), // Gộp cha-con vô slug đảm bảo không bị UNIQUE trúng
+                        'duong_dan'       => Str::slug($pName) . '-' . Str::slug($cName),
                         'danh_muc_cha_id' => $parentId,
                         'thu_tu'          => $thuTuCon++,
                         'trang_thai'      => true,

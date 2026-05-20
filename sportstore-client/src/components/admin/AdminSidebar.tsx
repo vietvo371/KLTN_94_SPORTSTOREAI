@@ -19,6 +19,7 @@ import {
     LogOut,
     UserCircle,
     Ruler,
+    Brain,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
@@ -43,6 +44,7 @@ const sidebarItems: SidebarItem[] = [
     { name: 'Nhân viên', href: '/admin/admins', icon: UserCircle, permission: 'xem_user' },
     { name: 'Phân quyền', href: '/admin/roles', icon: ShieldCheck, permission: 'phan_quyen' },
     { name: 'Báo cáo & Thống kê', href: '/admin/reports', icon: BarChart3, permission: 'xem_doanh_thu' },
+    { name: 'AI Cá nhân hóa', href: '/admin/ai', icon: Brain, permission: 'xem_dashboard' },
     { name: 'Bảng Size', href: '/admin/size-charts', icon: Ruler, permission: 'quan_ly_catalog' },
     { name: 'Banner', href: '/admin/banners', icon: ImageIcon, permission: 'quan_ly_banner' },
     { name: 'Thông báo', href: '/admin/notifications', icon: BellIcon, permission: 'gui_quang_ba' },

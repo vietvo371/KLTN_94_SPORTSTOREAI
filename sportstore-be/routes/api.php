@@ -114,6 +114,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\Admin\DashboardAdminController::class, 'index'])
             ->middleware('quyen:xem_dashboard');
 
+        // AI Personalization Dashboard
+        Route::prefix('ai')->group(function () {
+            Route::get('overview',          [\App\Http\Controllers\Api\Admin\AiDashboardController::class, 'overview']);
+            Route::get('users',             [\App\Http\Controllers\Api\Admin\AiDashboardController::class, 'userList']);
+            Route::get('user/{userId}',     [\App\Http\Controllers\Api\Admin\AiDashboardController::class, 'userProfile']);
+        });
+
         // Products CRUD
         Route::apiResource('products', \App\Http\Controllers\Api\Admin\SanPhamAdminController::class)
             ->middleware('quyen:xem_sp');

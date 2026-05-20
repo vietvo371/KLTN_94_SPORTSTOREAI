@@ -110,7 +110,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning className="overflow-x-hidden">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}>
+      <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}>
         <Providers>
           <TooltipProvider>
             <EmailVerifyBanner />

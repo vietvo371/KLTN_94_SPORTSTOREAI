@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import Link from 'next/link';
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
@@ -152,6 +153,68 @@ export default function AiDashboardPage() {
                     <StatCard icon={Eye}          label="Lượt xem sản phẩm" value={stats?.theo_loai?.xem ?? 0}    sub="hanh_vi = xem"           color="bg-sky-500" />
                 </div>
             )}
+
+            {/* ── Behavior donut chart ── */}
+            {stats && (() => {
+                const chartData = Object.entries(BEHAVIOR_WEIGHTS)
+                    .map(([key, cfg]) => ({ name: cfg.label, value: stats.theo_loai?.[key] ?? 0, color: cfg.color }))
+                    .filter(d => d.value > 0);
+                const total = chartData.reduce((s, d) => s + d.value, 0);
+                const COLORS: Record<string, string> = {
+                    'bg-emerald-500': '#10b981', 'bg-blue-500': '#3b82f6',
+                    'bg-rose-500': '#f43f5e', 'bg-amber-500': '#f59e0b', 'bg-slate-400': '#94a3b8',
+                };
+                return (
+                    <Card className="border-slate-200/60 shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-violet-500" />
+                                Phân bổ hành vi người dùng
+                                <Badge variant="secondary" className="ml-auto font-mono">{total.toLocaleString()} records</Badge>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center gap-6">
+                                <div className="h-44 w-44 shrink-0">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie data={chartData} cx="50%" cy="50%" innerRadius={42} outerRadius={68}
+                                                dataKey="value" paddingAngle={3}>
+                                                {chartData.map((entry, i) => (
+                                                    <Cell key={i} fill={COLORS[entry.color] ?? '#8b5cf6'} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip formatter={(v: number) => [`${v.toLocaleString()} lần`, '']}
+                                                contentStyle={{ borderRadius: 12, fontSize: 12 }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="flex-1 space-y-2.5">
+                                    {chartData.map(d => {
+                                        const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : '0';
+                                        const hex = COLORS[d.color] ?? '#8b5cf6';
+                                        return (
+                                            <div key={d.name}>
+                                                <div className="flex justify-between text-xs mb-1">
+                                                    <span className="font-medium text-slate-700 flex items-center gap-1.5">
+                                                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: hex }} />
+                                                        {d.name}
+                                                    </span>
+                                                    <span className="font-bold text-slate-600">{pct}%</span>
+                                                </div>
+                                                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className="h-full rounded-full transition-all duration-700"
+                                                        style={{ width: `${pct}%`, background: hex }} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                );
+            })()}
 
             {/* ── Matrix info + Behavior weights ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -469,7 +532,12 @@ export default function AiDashboardPage() {
                                     </Badge>
                                 </h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                    {profile.goi_y.map((sp: any, idx: number) => (
+                                    {profile.goi_y.map((sp: any, idx: number) => {
+                                        const scoreEntry = profile.top10_scores.find(
+                                            (s: any) => s.san_pham_id === sp.id
+                                        );
+                                        const cosineScore: number | null = scoreEntry?.diem_du_bao ?? null;
+                                        return (
                                         <Link
                                             key={sp.id}
                                             href={`/products/${sp.duong_dan}`}
@@ -491,17 +559,30 @@ export default function AiDashboardPage() {
                                                 <span className="absolute top-2 left-2 h-5 w-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center shadow">
                                                     {idx + 1}
                                                 </span>
+                                                {cosineScore !== null && (
+                                                    <span className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md">
+                                                        {cosineScore.toFixed(2)}
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="p-2">
                                                 <p className="text-xs font-medium text-slate-700 line-clamp-2 leading-tight">
                                                     {sp.ten_san_pham}
                                                 </p>
-                                                <p className="text-xs font-bold text-emerald-600 mt-1">
-                                                    {(sp.gia_khuyen_mai || sp.gia_goc)?.toLocaleString('vi-VN')}đ
-                                                </p>
+                                                <div className="flex items-center justify-between mt-1">
+                                                    <p className="text-xs font-bold text-emerald-600">
+                                                        {(sp.gia_khuyen_mai || sp.gia_goc)?.toLocaleString('vi-VN')}đ
+                                                    </p>
+                                                    {cosineScore !== null && (
+                                                        <span className="text-[10px] text-violet-500 font-bold">
+                                                            ★ {cosineScore.toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </Link>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>

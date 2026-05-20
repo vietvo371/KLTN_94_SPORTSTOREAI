@@ -83,22 +83,25 @@ def get_item_based_recommendations(user_id: int, db: Session, top_n: int = 8) ->
         log_ai("COLD-START", f"User [{user_id}] mới tinh chưa có hành vi. (Fallback -> Popular Items)")
         return get_popular_items(db, top_n)
     
-    log_ai("DATA", f"Hệ thống đã nạp {len(df_raw)} records, đã chấm trọng số. Đang lập ma trận User-Item...")
-    
+    n_users = df['nguoi_dung_id'].nunique()
+    n_items = df['san_pham_id'].nunique()
+    log_ai("DATA", f"Nạp {len(df_raw)} records → {n_users} users × {n_items} items. Đang dựng ma trận User-Item...")
+
     # 1. Tạo Ma Trận User - Item
-    # Hàng là người dùng, Cột là sản phẩm, Giá trị là tổng Điểm
     user_item_matrix = df.pivot(index='nguoi_dung_id', columns='san_pham_id', values='score').fillna(0)
-    
+
     # 2. Tính Ma trận độ tương đồng (Item-Item Similarity Matrix)
-    # Cosine Similarity trên Column của Item (đã transpose)
-    log_ai("COMPUTE", f"Đang tính toán Cosine Similarity cho User {user_id}")
+    log_ai("COMPUTE", f"Tính Cosine Similarity cho ma trận {n_items}×{n_items} sản phẩm...")
     item_similarity = cosine_similarity(user_item_matrix.T)
-    # Tạo DataFrame cho dễ tra cứu (Index và Column đều là Item IDs)
     item_sim_df = pd.DataFrame(item_similarity, index=user_item_matrix.columns, columns=user_item_matrix.columns)
-    
+
     # 3. Thông tin hành vi quá khứ của User hiện tại
     user_history = user_item_matrix.loc[user_id]
     user_interacted_items = user_history[user_history > 0].index.tolist()
+
+    # Log hành vi của user để demo
+    behavior_summary = {int(item): float(round(user_history[item], 1)) for item in user_interacted_items}
+    log_ai("USER-PROFILE", f"User [{user_id}] đã tương tác {len(user_interacted_items)} sản phẩm → điểm: {behavior_summary}")
     
     # 4. Dự báo điểm (Score prediction) cho các Sản phẩm User chưa xem
     predicted_scores = {}
@@ -130,7 +133,11 @@ def get_item_based_recommendations(user_id: int, db: Session, top_n: int = 8) ->
 
     # Sort descending
     sorted_items = sorted(predicted_scores.items(), key=lambda x: x[1], reverse=True)
-    
+
+    # Log top scores để thấy quá trình tính toán
+    top_scores_preview = {int(k): round(v, 3) for k, v in sorted_items[:5]}
+    log_ai("SCORE-TOP5", f"Điểm dự báo cao nhất cho User [{user_id}]: {top_scores_preview}")
+
     # Lấy ra Top N Item ID khuyên dùng nhất
     recommended_item_ids = [item[0] for item in sorted_items[:top_n]]
     

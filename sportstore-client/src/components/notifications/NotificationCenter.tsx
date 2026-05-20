@@ -27,6 +27,11 @@ import { useAuthStore } from "@/store/auth.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+// MySQL trả về chuỗi không có timezone (vd: "2024-05-20 15:00:00")
+// Thay space → T để browser parse đúng là local time, tránh lệch múi giờ
+const parseUtcDate = (dateStr: string): Date =>
+    new Date(dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T'));
+
 export function NotificationCenter() {
     const [open, setOpen] = useState(false);
     const router = useRouter();
@@ -155,7 +160,7 @@ export function NotificationCenter() {
                                             </p>
                                             <div className="flex items-center justify-between pt-1">
                                                 <span className="text-[10px] text-slate-400 flex items-center">
-                                                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: vi })}
+                                                    {formatDistanceToNow(parseUtcDate(item.created_at), { addSuffix: true, locale: vi })}
                                                 </span>
                                                 <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
                                             </div>

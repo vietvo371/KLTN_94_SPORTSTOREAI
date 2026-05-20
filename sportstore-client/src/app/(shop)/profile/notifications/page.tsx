@@ -13,6 +13,9 @@ import { useNotifications, useMarkAllRead, useMarkRead } from '@/hooks/useNotifi
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 
+const parseUtcDate = (dateStr: string): Date =>
+    new Date(dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T'));
+
 const ICON_MAP: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
     khuyen_mai:         { icon: Tag,         bg: 'bg-rose-50',    color: 'text-rose-500' },
     trang_thai_don:     { icon: ShoppingBag,  bg: 'bg-indigo-50',  color: 'text-indigo-500' },
@@ -152,7 +155,7 @@ export default function UserNotificationsPage() {
                                                 </p>
                                             </div>
                                             <span className="text-xs text-slate-400 whitespace-nowrap shrink-0 mt-0.5">
-                                                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: vi })}
+                                                {formatDistanceToNow(parseUtcDate(item.created_at), { addSuffix: true, locale: vi })}
                                             </span>
                                         </div>
 

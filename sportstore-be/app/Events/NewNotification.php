@@ -34,7 +34,7 @@ class NewNotification implements ShouldBroadcastNow
             'loai' => $this->thongBao->loai,
             'tieu_de' => $this->thongBao->tieu_de,
             'noi_dung' => $this->thongBao->noi_dung,
-            'created_at' => (string) $this->thongBao->created_at,
+            'created_at' => \Carbon\Carbon::now()->utc()->toISOString(),
         ];
     }
 }

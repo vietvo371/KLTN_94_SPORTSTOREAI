@@ -8,6 +8,7 @@ use App\Models\DonHang;
 use App\Models\GioHang;
 use App\Models\LichSuTrangThaiDon;
 use App\Models\MaGiamGia;
+use App\Models\HanhViNguoiDung;
 use App\Models\NguoiDung;
 use App\Models\SanPham;
 use App\Events\NewOrderReceived;
@@ -141,6 +142,15 @@ class DonHangService
                 'trang_thai' => 'cho_xac_nhan',
                 'ghi_chu' => 'Đơn hàng được tạo thành công từ giỏ hàng.',
             ]);
+
+            // 6.5 Ghi nhận hành vi mua_hang cho từng sản phẩm (cải thiện độ chính xác ML)
+            foreach ($cart->items as $item) {
+                HanhViNguoiDung::create([
+                    'nguoi_dung_id' => $user->id,
+                    'san_pham_id'   => $item->san_pham_id,
+                    'hanh_vi'       => 'mua_hang',
+                ]);
+            }
 
             // 7. Xóa giỏ hàng
             $cart->items()->delete();
@@ -292,6 +302,13 @@ class DonHangService
             if (($sanPham->so_luong_ton_kho ?? 0) >= $soLuong) {
                 $sanPham->decrement('so_luong_ton_kho', $soLuong);
             }
+
+            // 5.5 Ghi nhận hành vi mua_hang cho ML
+            HanhViNguoiDung::create([
+                'nguoi_dung_id' => $user->id,
+                'san_pham_id'   => $sanPham->id,
+                'hanh_vi'       => 'mua_hang',
+            ]);
 
             // 6. Ghi lịch sử trạng thái
             LichSuTrangThaiDon::create([
